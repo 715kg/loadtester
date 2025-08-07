@@ -81,6 +81,7 @@ jobs:
         GOARCH: ${{ matrix.goarch }}
         CGO_ENABLED: 0
       run: |
+        mkdir -p dist
         BINARY_NAME="loadtester-${{ steps.version.outputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}"
         if [ "${{ matrix.goos }}" = "windows" ]; then
           BINARY_NAME="${BINARY_NAME}.exe"
@@ -90,7 +91,7 @@ jobs:
           -o "dist/${BINARY_NAME}" ./cmd/loadtester
           
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: loadtester-${{ matrix.goos }}-${{ matrix.goarch }}
         path: dist/
@@ -103,7 +104,7 @@ jobs:
     
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       
     - name: Create checksums
       run: |
