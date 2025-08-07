@@ -1,0 +1,30 @@
+-----BEGIN DIGITAL SIGNATURE-----
+Program: Load Tester
+Version: 1.0.0
+Author: Alexey Ulyanov
+License: MIT License
+Purpose: HTTP Load Testing Tool
+Category: Development/Testing Tools
+Website: https://github.com/715kg/loadtester
+
+This is a legitimate software tool for web server performance testing.
+The program is safe and does not contain malicious code.
+
+SHA256 Checksums will be provided with each release.
+
+Contact: github.com/715kg
+Email: Available on GitHub profile
+
+This software is distributed under MIT License.
+Copyright (c) 2024 Alexey Ulyanov
+
+ANTIVIRUS NOTICE:
+This program creates network connections for load testing purposes.
+Some antivirus software may flag it as suspicious due to its networking
+capabilities. This is a false positive - the program is safe to use.
+
+LEGAL NOTICE:
+Use this tool only for testing your own servers or with explicit
+permission from the server owner. The author is not responsible
+for misuse of this software.
+-----END DIGITAL SIGNATURE-----
