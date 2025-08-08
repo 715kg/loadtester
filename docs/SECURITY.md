@@ -49,9 +49,9 @@
 ### Контрольные суммы файлов:
 ```
 # Будут предоставлены с каждым релизом
-loadtester-v1.0.0-windows-amd64.exe: SHA256_HASH
-loadtester-v1.0.0-linux-amd64: SHA256_HASH
-loadtester-v1.0.0-darwin-amd64: SHA256_HASH
+loadtester-v*.*.*-windows-amd64.exe: SHA256_HASH
+loadtester-v*.*.*-linux-amd64: SHA256_HASH
+loadtester-v*.*.*-darwin-amd64: SHA256_HASH
 ```
 
 ### Проверка целостности:
@@ -126,4 +126,3 @@ go build .
 **Контакты:**
 - GitHub: https://github.com/715kg
 - Лицензия: MIT License
-- Версия документа: 1.0

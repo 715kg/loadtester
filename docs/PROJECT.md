@@ -104,7 +104,6 @@ make all
 
 - **Issues:** https://github.com/715kg/loadtester/issues
 - **Discussions:** https://github.com/715kg/loadtester/discussions
-- **Wiki:** https://github.com/715kg/loadtester/wiki
 
 ## 🤝 Вклад в проект
 

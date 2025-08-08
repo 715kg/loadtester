@@ -1,0 +1,145 @@
+name: Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  test:
+    name: Test Before Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
+        
+    - name: Download dependencies
+      run: go mod download
+      
+    - name: Run tests
+      run: go test -v -race ./...
+
+  build:
+    name: Build Release
+    runs-on: ubuntu-latest
+    needs: test
+    
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
+            
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
+        
+    - name: Get version
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
+        
+    - name: Build binary
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: 0
+      run: |
+        echo "Building for ${{ matrix.goos }}/${{ matrix.goarch }}"
+        
+        mkdir -p dist
+        BINARY_NAME="loadtester-${{ steps.version.outputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}"
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          BINARY_NAME="${BINARY_NAME}.exe"
+        fi
+        
+        echo "Building binary: ${BINARY_NAME}"
+        go build -v -ldflags "-s -w -X main.version=${{ steps.version.outputs.version }} -X main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ) -X main.gitCommit=${{ github.sha }}" \
+          -o "dist/${BINARY_NAME}" ./cmd/loadtester
+        
+        echo "Build completed. File info:"
+        ls -la dist/
+          
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: loadtester-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: dist/
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: loadtester-*
+        merge-multiple: true
+      
+    - name: List downloaded files
+      run: |
+        echo "Downloaded files:"
+        find . -name "loadtester-*" -type f
+        
+    - name: Create checksums
+      run: |
+        find . -name "loadtester-*" -type f -exec sha256sum {} \; > checksums.txt
+        echo "Checksums created:"
+        cat checksums.txt
+        
+    - name: Get version and changelog
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+        # Try to extract changelog from git commits since last tag
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        if [ -n "$PREV_TAG" ]; then
+          echo "## Changes since $PREV_TAG" > changelog.md
+          git log --pretty=format:"- %s" $PREV_TAG..HEAD >> changelog.md
+        else
+          echo "## Initial Release" > changelog.md
+          echo "First release of Load Tester" >> changelog.md
+        fi
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: "Load Tester ${{ steps.version.outputs.version }}"
+        body: |
+          HTTP Load Testing Tool v${{ steps.version.outputs.version }}
+          
+          **Запуск:** Скачайте файл для вашей ОС, запустите и откройте http://localhost:8081
+          
+          **⚠️ Используйте только на своих серверах или с разрешения владельца!**
+        files: |
+          loadtester-*
+          checksums.txt
+        draft: false
+        prerelease: false

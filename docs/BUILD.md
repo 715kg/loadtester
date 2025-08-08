@@ -58,13 +58,13 @@ CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o dist/macos/l
 ```
 dist/
 ├── windows/
-│   └── loadtester-v1.0.0-windows-amd64.exe
+│   └── loadtester-v*.*.*-windows-amd64.exe
 ├── linux/
-│   ├── loadtester-v1.0.0-linux-amd64
-│   └── loadtester-v1.0.0-linux-arm64
+│   ├── loadtester-v*.*.*-linux-amd64
+│   └── loadtester-v*.*.*-linux-arm64
 └── macos/
-    ├── loadtester-v1.0.0-darwin-amd64    (Intel Mac)
-    └── loadtester-v1.0.0-darwin-arm64    (Apple Silicon)
+    ├── loadtester-v*.*.*-darwin-amd64    (Intel Mac)
+    └── loadtester-v*.*.*-darwin-arm64    (Apple Silicon)
 ```
 
 ## 🏷️ Версионирование
