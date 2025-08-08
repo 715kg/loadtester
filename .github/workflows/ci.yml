@@ -106,7 +106,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'release'
+    if: startsWith(github.ref, 'refs/tags/v')
     
     steps:
     - name: Download all artifacts
@@ -116,11 +116,51 @@ jobs:
       run: |
         find . -name "loadtester-*" -type f -exec sha256sum {} \; > checksums.txt
         
-    - name: Upload release assets
+    - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
+        name: "Load Tester ${{ github.ref_name }}"
+        body: |
+          🚀 **Load Tester ${{ github.ref_name }} - Professional HTTP Load Testing Tool**
+          
+          ## ✨ Features
+          - Cross-platform HTTP load testing tool
+          - Web-based interface on port 8081
+          - Support for Windows, Linux, macOS (Intel & Apple Silicon)
+          - Real-time statistics and performance metrics
+          - Dark/light theme support
+          - Graceful shutdown handling
+          - Built-in security limitations
+          
+          ## 📦 Downloads
+          Choose the binary for your operating system:
+          
+          ### Windows
+          - `loadtester-${{ github.ref_name }}-windows-amd64.exe` - for Windows 10/11 (64-bit)
+          
+          ### Linux
+          - `loadtester-${{ github.ref_name }}-linux-amd64` - for Linux x86_64
+          - `loadtester-${{ github.ref_name }}-linux-arm64` - for Linux ARM64
+          
+          ### macOS
+          - `loadtester-${{ github.ref_name }}-darwin-amd64` - for macOS Intel
+          - `loadtester-${{ github.ref_name }}-darwin-arm64` - for macOS Apple Silicon
+          
+          ## 🚀 Quick Start
+          1. Download the binary for your platform
+          2. Make it executable (Linux/macOS): `chmod +x loadtester-*`
+          3. Run: `./loadtester-*` or `loadtester-*.exe`
+          4. Open http://localhost:8081 in your browser
+          
+          ## 🔒 Security
+          - All binaries are signed with SHA256 checksums (see checksums.txt)
+          - Static compilation - no external dependencies required
+          
+          **⚠️ Use only on your own servers or with explicit permission!**
         files: |
           loadtester-*/loadtester-*
           checksums.txt
+        draft: false
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
