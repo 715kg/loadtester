@@ -886,10 +886,17 @@ const HTMLTemplate = `
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="maxMemory">Максимальная память (GB):</label>
-                    <input type="number" id="maxMemory" name="maxMemory" value="30" min="1" step="0.1" required>
-                    <div class="field-description">Лимит памяти для программы в гигабайтах. Рекомендуется 70-80% от доступной RAM на вашем ПК или хосте, где запускаете программу<br>Если вы выделите программе больше памяти чем у вас есть, вы можете столкнуться с зависанием</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="maxMemory">Максимальная память (GB):</label>
+                        <input type="number" id="maxMemory" name="maxMemory" value="30" min="1" step="0.1" required>
+                        <div class="field-description">Лимит памяти для программы в гигабайтах. Рекомендуется 70-80% от доступной RAM</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxCPUCores">Ядер процессора:</label>
+                        <input type="number" id="maxCPUCores" name="maxCPUCores" value="0" min="0" required>
+                        <div class="field-description">Количество ядер CPU для использования. 0 = автоматически (все доступные ядра)</div>
+                    </div>
                 </div>
             </form>
             
@@ -1037,6 +1044,21 @@ const HTMLTemplate = `
                             ⚠️ Не устанавливайте больше 80% от доступной RAM
                         </div>
                     </div>
+
+                    <div class="setting-item">
+                        <h3>🖥️ Ядра процессора</h3>
+                        <p><strong>Что это:</strong> Количество ядер CPU для выполнения теста</p>
+                        <p><strong>Рекомендации:</strong></p>
+                        <ul>
+                            <li><strong>0 (авто):</strong> Использовать все доступные ядра</li>
+                            <li><strong>1-2 ядра:</strong> Для легких тестов</li>
+                            <li><strong>4-8 ядер:</strong> Для средних тестов</li>
+                            <li><strong>8+ ядер:</strong> Для интенсивных тестов</li>
+                        </ul>
+                        <div class="warning-small">
+                            💡 Больше ядер = выше производительность теста
+                        </div>
+                    </div>
                 </div>
 
                 <div class="network-section">
@@ -1074,6 +1096,7 @@ const HTMLTemplate = `
                             <p><strong>Конкурентность:</strong> 100</p>
                             <p><strong>Таймаут:</strong> 5 сек</p>
                             <p><strong>Память:</strong> 2 GB</p>
+                            <p><strong>Ядра CPU:</strong> 2</p>
                         </div>
                         <p><em>Подходит для проверки базовой работоспособности сайта</em></p>
                     </div>
@@ -1087,6 +1110,7 @@ const HTMLTemplate = `
                             <p><strong>Конкурентность:</strong> 2,000</p>
                             <p><strong>Таймаут:</strong> 3 сек</p>
                             <p><strong>Память:</strong> 8 GB</p>
+                            <p><strong>Ядра CPU:</strong> 4</p>
                         </div>
                         <p><em>Имитирует реальную нагрузку от пользователей</em></p>
                     </div>
@@ -1100,6 +1124,7 @@ const HTMLTemplate = `
                             <p><strong>Конкурентность:</strong> 10,000</p>
                             <p><strong>Таймаут:</strong> 2 сек</p>
                             <p><strong>Память:</strong> 20 GB</p>
+                            <p><strong>Ядра CPU:</strong> 0 (все)</p>
                         </div>
                         <p><em>Проверяет пределы производительности сервера</em></p>
                     </div>
@@ -1367,6 +1392,7 @@ const HTMLTemplate = `
             config.maxConcurrency = parseInt(config.maxConcurrency);
             config.timeout = parseInt(config.timeout);
             config.maxMemory = parseFloat(config.maxMemory);
+            config.maxCPUCores = parseInt(config.maxCPUCores);
             
             fetch('/start', {
                 method: 'POST',

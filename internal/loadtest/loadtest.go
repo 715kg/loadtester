@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"runtime"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -50,6 +51,7 @@ type Config struct {
 	MaxConcurrency int     `json:"maxConcurrency"`
 	Timeout        int     `json:"timeout"` // в секундах
 	MaxMemory      float64 `json:"maxMemory"`
+	MaxCPUCores    int     `json:"maxCPUCores"` // количество ядер CPU, 0 = все доступные
 }
 
 // Stats содержит текущую статистику теста
@@ -189,6 +191,12 @@ func resetCounters() {
 
 // runLoadTestCore выполняет основную логику нагрузочного теста
 func runLoadTestCore(ctx context.Context, config *Config) {
+	// Настройка количества ядер CPU
+	if config.MaxCPUCores > 0 {
+		runtime.GOMAXPROCS(config.MaxCPUCores)
+	}
+	// Если MaxCPUCores = 0, используем все доступные ядра (поведение по умолчанию)
+
 	// Настройка GC и памяти
 	debug.SetGCPercent(50)
 	debug.SetMemoryLimit(int64(GBToBytes(config.MaxMemory)))
