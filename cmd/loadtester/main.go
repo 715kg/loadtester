@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/715kg/loadtester/internal/loadtest"
+	"github.com/715kg/loadtester/internal/portscan"
 	"github.com/715kg/loadtester/internal/templates"
 	"github.com/715kg/loadtester/pkg/info"
 )
@@ -62,6 +63,12 @@ func main() {
 	http.HandleFunc("/start", handleStart)
 	http.HandleFunc("/stop", handleStop)
 	http.HandleFunc("/stats", handleStats)
+
+	// Обработчики для портсканера
+	http.HandleFunc("/portscan/start", portscan.StartPortScanHandler)
+	http.HandleFunc("/portscan/stop", portscan.StopPortScanHandler)
+	http.HandleFunc("/portscan/stats", portscan.PortScanStatsHandler)
+	http.HandleFunc("/portscan/types", portscan.GetPortTypesHandler)
 
 	// Канал для получения сигналов ОС
 	sigChan := make(chan os.Signal, 1)

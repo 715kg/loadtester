@@ -121,6 +121,46 @@ const HTMLTemplate = `
 
         .nav-menu {
             display: flex;
+            position: relative;
+        }
+
+        .nav-dropdown {
+            position: relative;
+            padding-top: 10px;
+        }
+
+        .nav-dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            min-width: 200px;
+            z-index: 1000;
+            padding: 8px 0;
+        }
+
+        .nav-dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .nav-dropdown-item:hover {
+            color: var(--accent-color);
+            background: var(--bg-card);
+        }
+
+        .nav-dropdown-item.active {
+            color: var(--accent-color);
+            background: var(--bg-card);
         }
 
         .nav-right {
@@ -145,11 +185,27 @@ const HTMLTemplate = `
             .nav-menu {
                 gap: 20px;
                 justify-content: center;
+                flex-wrap: wrap;
             }
             
             .nav-right {
                 width: 100%;
                 justify-content: center;
+            }
+            
+            .nav-dropdown-content {
+                position: static;
+                display: none;
+                box-shadow: none;
+                border: none;
+                background: var(--bg-card);
+                border-radius: 8px;
+                margin-top: 8px;
+                width: 100%;
+            }
+            
+            .nav-dropdown:hover .nav-dropdown-content {
+                display: block;
             }
         }
 
@@ -811,6 +867,82 @@ const HTMLTemplate = `
             font-size: 12px;
             color: var(--text-muted);
         }
+
+        .port-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .port-result:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .port-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .port-number {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text-primary);
+            min-width: 60px;
+        }
+
+        .port-service {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .port-description {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .port-status {
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .port-status.open {
+            background: var(--error-bg);
+            color: var(--error-color);
+        }
+
+        .port-status.closed {
+            background: var(--success-bg);
+            color: var(--success-color);
+        }
+
+        @media (max-width: 768px) {
+            .port-result {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .port-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+                width: 100%;
+            }
+            
+            .port-status {
+                align-self: flex-end;
+            }
+        }
     </style>
 </head>
 <body>
@@ -828,8 +960,20 @@ const HTMLTemplate = `
             <div class="nav-left">
                 <div class="nav-brand">🚀 Load Tester</div>
                 <div class="nav-menu">
-                    <a href="#" class="nav-link active" onclick="showPage('main')">Главная</a>
-                    <a href="#" class="nav-link" onclick="showPage('instructions')">Инструкция</a>
+                    <div class="nav-dropdown">
+                        <a href="#" class="nav-link">Тесты ▼</a>
+                        <div class="nav-dropdown-content">
+                            <a href="#" class="nav-dropdown-item active" onclick="showPage('loadtest')">Нагрузочный тест</a>
+                            <a href="#" class="nav-dropdown-item" onclick="showPage('portscan')">Тест портов</a>
+                        </div>
+                    </div>
+                    <div class="nav-dropdown">
+                        <a href="#" class="nav-link">Инструкция ▼</a>
+                        <div class="nav-dropdown-content">
+                            <a href="#" class="nav-dropdown-item" onclick="showPage('loadtest-instructions')">Нагрузочный тест</a>
+                            <a href="#" class="nav-dropdown-item" onclick="showPage('portscan-instructions')">Тестирование портов</a>
+                        </div>
+                    </div>
                     <a href="#" class="nav-link" onclick="showPage('agreement')">Соглашение</a>
                 </div>
             </div>
@@ -843,7 +987,7 @@ const HTMLTemplate = `
     </nav>
 
     <div class="container">
-        <div class="main-card" id="mainPage">
+        <div class="main-card" id="loadtestPage">
             <h1>⚙️ Настройки тестирования</h1>
             
             <form id="testForm">
@@ -960,8 +1104,85 @@ const HTMLTemplate = `
             </div>
         </div>
 
-        <div class="main-card" id="instructionsPage" style="display: none;">
-            <h1>📖 Инструкция по использованию</h1>
+        <div class="main-card" id="portscanPage" style="display: none;">
+            <h1>🔍 Тестирование портов</h1>
+            
+            <form id="portscanForm">
+                <div class="form-group">
+                    <label for="scanTarget">URL или IP адрес:</label>
+                    <input type="text" id="scanTarget" name="scanTarget" placeholder="example.com или 192.168.1.1" required>
+                    <div class="field-description">Введите доменное имя или IP адрес для сканирования портов</div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="portType">Тип портов:</label>
+                        <select id="portType" name="portType" onchange="toggleCustomPorts()">
+                            <option value="common">Популярные порты</option>
+                            <option value="http">HTTP/HTTPS</option>
+                            <option value="ssh">SSH</option>
+                            <option value="database">Базы данных</option>
+                            <option value="ftp">FTP</option>
+                            <option value="mail">Почтовые сервисы</option>
+                            <option value="dns">DNS</option>
+                            <option value="gaming">Игровые сервисы</option>
+                            <option value="custom">Пользовательские</option>
+                        </select>
+                        <div class="field-description">Выберите категорию портов для сканирования</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="scanTimeout">Таймаут (сек):</label>
+                        <input type="number" id="scanTimeout" name="scanTimeout" value="3" min="1" max="30" required>
+                        <div class="field-description">Время ожидания ответа от каждого порта</div>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="customPortsGroup" style="display: none;">
+                    <label for="customPorts">Пользовательские порты:</label>
+                    <input type="text" id="customPorts" name="customPorts" placeholder="80,443,8080 или 1-1000">
+                    <div class="field-description">
+                        Укажите порты через запятую (80,443,8080) или диапазон (1-1000). Максимум 1000 портов.
+                    </div>
+                </div>
+            </form>
+            
+            <div class="buttons">
+                <button type="button" class="start-btn" id="startScanBtn" onclick="startPortScan()">
+                    <span>🔍</span> Начать сканирование
+                </button>
+                <button type="button" class="stop-btn" id="stopScanBtn" onclick="stopPortScan()" disabled>
+                    <span>⏹️</span> Остановить
+                </button>
+            </div>
+            
+            <div id="scanStatus" class="status ready">Готов к сканированию</div>
+            
+            <div class="stats" id="scanStats" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-title">Всего портов</div>
+                    <div class="stat-value" id="totalPortsStat">0</div>
+                    <div class="stat-subtitle">Проверено портов</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-title">Открытые порты</div>
+                    <div class="stat-value" id="openPortsStat">0</div>
+                    <div class="stat-subtitle">Доступны для подключения</div>
+                </div>
+                <div class="stat-card error">
+                    <div class="stat-title">Закрытые порты</div>
+                    <div class="stat-value" id="closedPortsStat">0</div>
+                    <div class="stat-subtitle">Недоступны</div>
+                </div>
+            </div>
+            
+            <div id="portResults" style="display: none; margin-top: 40px;">
+                <h2 style="color: var(--accent-color); margin-bottom: 20px;">📋 Результаты сканирования</h2>
+                <div id="portResultsList"></div>
+            </div>
+        </div>
+
+        <div class="main-card" id="loadtest-instructionsPage" style="display: none;">
+            <h1>📖 Инструкция по нагрузочному тестированию</h1>
             
             <div class="instructions-content">
                 <div class="intro-section">
@@ -1202,6 +1423,230 @@ const HTMLTemplate = `
             </div>
         </div>
 
+        <div class="main-card" id="portscan-instructionsPage" style="display: none;">
+            <h1>🔍 Инструкция по тестированию портов</h1>
+            
+            <div class="instructions-content">
+                <div class="intro-section">
+                    <h2>🎯 Что такое тестирование портов?</h2>
+                    <p>Тестирование портов (Port Scanning) — это процесс проверки доступности сетевых портов на удаленном хосте. Программа пытается установить соединение с различными портами, чтобы определить, какие сервисы запущены и доступны для подключения.</p>
+                    <p>Это важный инструмент для администраторов сети, специалистов по безопасности и разработчиков для диагностики сетевых проблем и аудита безопасности.</p>
+                </div>
+
+                <div class="settings-section">
+                    <h2>⚙️ Описание настроек</h2>
+                    
+                    <div class="setting-item">
+                        <h3>🌐 URL или IP адрес</h3>
+                        <p><strong>Что это:</strong> Целевой хост для сканирования портов</p>
+                        <p><strong>Примеры:</strong></p>
+                        <ul>
+                            <li><code>example.com</code> — доменное имя</li>
+                            <li><code>192.168.1.1</code> — IP адрес в локальной сети</li>
+                            <li><code>8.8.8.8</code> — публичный IP адрес</li>
+                            <li><code>localhost</code> — локальный компьютер</li>
+                        </ul>
+                        <p><strong>Важно:</strong> Не указывайте протокол (http:// или https://), только доменное имя или IP</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>🔧 Тип портов</h3>
+                        <p><strong>Популярные порты</strong> — наиболее часто используемые порты (80, 443, 22, 21, 25, 53, 110, 143, 993, 995)</p>
+                        <p><strong>HTTP/HTTPS</strong> — веб-серверы (80, 443, 8080, 8443, 3000, 5000, 9000)</p>
+                        <p><strong>SSH</strong> — удаленное управление (22, 2222)</p>
+                        <p><strong>Базы данных</strong> — СУБД (3306, 5432, 1433, 27017, 6379)</p>
+                        <p><strong>FTP</strong> — файловые серверы (21, 22, 990)</p>
+                        <p><strong>Почтовые сервисы</strong> — email серверы (25, 110, 143, 465, 587, 993, 995)</p>
+                        <p><strong>DNS</strong> — серверы имен (53, 853)</p>
+                        <p><strong>Игровые сервисы</strong> — игровые порты (25565, 27015, 7777)</p>
+                        <p><strong>Пользовательские</strong> — указать свои порты</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>⏱️ Таймаут</h3>
+                        <p><strong>Что это:</strong> Время ожидания ответа от каждого порта</p>
+                        <p><strong>Рекомендации:</strong></p>
+                        <ul>
+                            <li><strong>1-2 сек:</strong> Для быстрого сканирования локальной сети</li>
+                            <li><strong>3-5 сек:</strong> Для обычного сканирования в интернете</li>
+                            <li><strong>10+ сек:</strong> Для медленных или удаленных соединений</li>
+                        </ul>
+                        <div class="warning-small">
+                            ⚠️ Слишком маленький таймаут может пропустить открытые порты
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>🎯 Пользовательские порты</h3>
+                        <p><strong>Формат записи:</strong></p>
+                        <ul>
+                            <li><code>80,443,8080</code> — конкретные порты через запятую</li>
+                            <li><code>1-1000</code> — диапазон портов</li>
+                            <li><code>80,443,1000-2000</code> — комбинация</li>
+                        </ul>
+                        <p><strong>Ограничения:</strong> Максимум 1000 портов за одно сканирование</p>
+                        <div class="warning-small">
+                            💡 Большое количество портов увеличивает время сканирования
+                        </div>
+                    </div>
+                </div>
+
+                <div class="network-section">
+                    <h2>🌐 Популярные порты и сервисы</h2>
+                    
+                    <div class="network-table">
+                        <h3>Веб-сервисы:</h3>
+                        <ul>
+                            <li><strong>80</strong> — HTTP (веб-сайты)</li>
+                            <li><strong>443</strong> — HTTPS (защищенные веб-сайты)</li>
+                            <li><strong>8080</strong> — HTTP альтернативный</li>
+                            <li><strong>8443</strong> — HTTPS альтернативный</li>
+                            <li><strong>3000</strong> — Node.js приложения</li>
+                            <li><strong>5000</strong> — Flask/Django приложения</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="network-table">
+                        <h3>Системные сервисы:</h3>
+                        <ul>
+                            <li><strong>22</strong> — SSH (удаленное управление)</li>
+                            <li><strong>21</strong> — FTP (передача файлов)</li>
+                            <li><strong>23</strong> — Telnet (небезопасное управление)</li>
+                            <li><strong>53</strong> — DNS (разрешение имен)</li>
+                            <li><strong>25</strong> — SMTP (отправка почты)</li>
+                            <li><strong>110</strong> — POP3 (получение почты)</li>
+                            <li><strong>143</strong> — IMAP (почтовый сервер)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="network-table">
+                        <h3>Базы данных:</h3>
+                        <ul>
+                            <li><strong>3306</strong> — MySQL/MariaDB</li>
+                            <li><strong>5432</strong> — PostgreSQL</li>
+                            <li><strong>1433</strong> — Microsoft SQL Server</li>
+                            <li><strong>27017</strong> — MongoDB</li>
+                            <li><strong>6379</strong> — Redis</li>
+                            <li><strong>5984</strong> — CouchDB</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="examples-section">
+                    <h2>📋 Примеры использования</h2>
+                    
+                    <div class="config-example">
+                        <h3>🟢 Быстрая проверка веб-сервера</h3>
+                        <div class="config-box">
+                            <p><strong>Цель:</strong> example.com</p>
+                            <p><strong>Тип портов:</strong> HTTP/HTTPS</p>
+                            <p><strong>Таймаут:</strong> 3 сек</p>
+                        </div>
+                        <p><em>Проверяет доступность веб-сервисов на сайте</em></p>
+                    </div>
+
+                    <div class="config-example">
+                        <h3>🟡 Аудит локального сервера</h3>
+                        <div class="config-box">
+                            <p><strong>Цель:</strong> 192.168.1.100</p>
+                            <p><strong>Тип портов:</strong> Популярные порты</p>
+                            <p><strong>Таймаут:</strong> 2 сек</p>
+                        </div>
+                        <p><em>Проверяет основные сервисы на сервере в локальной сети</em></p>
+                    </div>
+
+                    <div class="config-example">
+                        <h3>🔴 Полное сканирование диапазона</h3>
+                        <div class="config-box">
+                            <p><strong>Цель:</strong> target-server.com</p>
+                            <p><strong>Тип портов:</strong> Пользовательские</p>
+                            <p><strong>Порты:</strong> 1-1000</p>
+                            <p><strong>Таймаут:</strong> 5 сек</p>
+                        </div>
+                        <p><em>Сканирует первую тысячу портов для полного аудита</em></p>
+                    </div>
+                </div>
+
+                <div class="results-section">
+                    <h2>📊 Интерпретация результатов</h2>
+                    
+                    <div class="result-item">
+                        <h3>🟢 Открытые порты</h3>
+                        <p>Порты, которые принимают соединения. Это означает, что на этих портах запущены сервисы.</p>
+                        <ul>
+                            <li><strong>Веб-порты (80, 443):</strong> Работает веб-сервер</li>
+                            <li><strong>SSH (22):</strong> Доступно удаленное управление</li>
+                            <li><strong>База данных:</strong> СУБД принимает подключения</li>
+                        </ul>
+                        <div class="warning-small">
+                            ⚠️ Открытые порты могут быть точками входа для атак
+                        </div>
+                    </div>
+
+                    <div class="result-item">
+                        <h3>🔴 Закрытые порты</h3>
+                        <p>Порты, которые не отвечают на запросы подключения. Сервисы на этих портах не запущены или заблокированы.</p>
+                        <ul>
+                            <li>Сервис не установлен или не запущен</li>
+                            <li>Порт заблокирован файрволом</li>
+                            <li>Сервис настроен на другой порт</li>
+                        </ul>
+                    </div>
+
+                    <div class="result-item">
+                        <h3>📈 Статистика сканирования</h3>
+                        <p><strong>Всего портов:</strong> Количество проверенных портов</p>
+                        <p><strong>Открытые порты:</strong> Количество доступных сервисов</p>
+                        <p><strong>Закрытые порты:</strong> Количество недоступных портов</p>
+                    </div>
+                </div>
+
+                <div class="tips-section">
+                    <h2>💡 Советы и рекомендации</h2>
+                    
+                    <div class="tip-item">
+                        <h3>🎯 Перед сканированием</h3>
+                        <ul>
+                            <li>Получите разрешение владельца системы</li>
+                            <li>Начните с популярных портов</li>
+                            <li>Проверьте сетевое подключение</li>
+                            <li>Убедитесь в правильности адреса цели</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>⚡ Оптимизация сканирования</h3>
+                        <ul>
+                            <li>Используйте разумные таймауты (3-5 сек)</li>
+                            <li>Не сканируйте слишком много портов одновременно</li>
+                            <li>Сканируйте в нерабочее время для минимизации нагрузки</li>
+                            <li>Документируйте результаты для анализа</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>🛡️ Безопасность и этика</h3>
+                        <ul>
+                            <li>Сканируйте только свои системы или с разрешения</li>
+                            <li>Соблюдайте законодательство вашей страны</li>
+                            <li>Не используйте для злонамеренных целей</li>
+                            <li>Уважайте ресурсы чужих серверов</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>🔍 Анализ результатов</h3>
+                        <ul>
+                            <li>Открытые порты могут указывать на уязвимости</li>
+                            <li>Неожиданно открытые порты требуют внимания</li>
+                            <li>Закрытые критичные порты могут указывать на проблемы</li>
+                            <li>Сравнивайте результаты с ожидаемой конфигурацией</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="main-card" id="agreementPage" style="display: none;">
             <h1>📋 Пользовательское соглашение</h1>
             
@@ -1285,7 +1730,40 @@ const HTMLTemplate = `
         document.addEventListener('DOMContentLoaded', function() {
             initTheme();
             showCookieNotice();
+            initDropdownMenu();
         });
+
+        function initDropdownMenu() {
+            const dropdowns = document.querySelectorAll('.nav-dropdown');
+            
+            dropdowns.forEach(dropdown => {
+                const dropdownContent = dropdown.querySelector('.nav-dropdown-content');
+                let timeoutId;
+
+                if (dropdownContent) {
+                    dropdown.addEventListener('mouseenter', function() {
+                        clearTimeout(timeoutId);
+                        dropdownContent.style.display = 'block';
+                    });
+
+                    dropdown.addEventListener('mouseleave', function() {
+                        timeoutId = setTimeout(function() {
+                            dropdownContent.style.display = 'none';
+                        }, 100);
+                    });
+
+                    dropdownContent.addEventListener('mouseenter', function() {
+                        clearTimeout(timeoutId);
+                    });
+
+                    dropdownContent.addEventListener('mouseleave', function() {
+                        timeoutId = setTimeout(function() {
+                            dropdownContent.style.display = 'none';
+                        }, 100);
+                    });
+                }
+            });
+        }
 
         function initTheme() {
             const savedTheme = localStorage.getItem('loadtester-theme') || 'light';
@@ -1337,31 +1815,53 @@ const HTMLTemplate = `
 
         function showPage(pageId) {
             // Скрываем все страницы
-            document.getElementById('mainPage').style.display = 'none';
-            document.getElementById('instructionsPage').style.display = 'none';
+            document.getElementById('loadtestPage').style.display = 'none';
+            document.getElementById('portscanPage').style.display = 'none';
+            document.getElementById('loadtest-instructionsPage').style.display = 'none';
+            document.getElementById('portscan-instructionsPage').style.display = 'none';
             document.getElementById('agreementPage').style.display = 'none';
             
             // Показываем нужную страницу
-            if (pageId === 'main') {
-                document.getElementById('mainPage').style.display = 'block';
-            } else if (pageId === 'instructions') {
-                document.getElementById('instructionsPage').style.display = 'block';
+            if (pageId === 'loadtest') {
+                document.getElementById('loadtestPage').style.display = 'block';
+            } else if (pageId === 'portscan') {
+                document.getElementById('portscanPage').style.display = 'block';
+            } else if (pageId === 'loadtest-instructions') {
+                document.getElementById('loadtest-instructionsPage').style.display = 'block';
+            } else if (pageId === 'portscan-instructions') {
+                document.getElementById('portscan-instructionsPage').style.display = 'block';
             } else if (pageId === 'agreement') {
                 document.getElementById('agreementPage').style.display = 'block';
             }
             
             // Обновляем активную ссылку в навигации
-            document.querySelectorAll('.nav-link').forEach(link => {
+            document.querySelectorAll('.nav-link, .nav-dropdown-item').forEach(link => {
                 link.classList.remove('active');
             });
             
-            if (pageId === 'main') {
-                document.querySelector('.nav-link[onclick="showPage(\'main\')"]').classList.add('active');
-            } else if (pageId === 'instructions') {
-                document.querySelector('.nav-link[onclick="showPage(\'instructions\')"]').classList.add('active');
-            } else if (pageId === 'agreement') {
-                document.querySelector('.nav-link[onclick="showPage(\'agreement\')"]').classList.add('active');
+            const loadtestLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'loadtest\')"]');
+            const portscanLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'portscan\')"]');
+            const loadtestInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'loadtest-instructions\')"]');
+            const portscanInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'portscan-instructions\')"]');
+            const agreementLink = document.querySelector('.nav-link[onclick="showPage(\'agreement\')"]');
+            
+            if (pageId === 'loadtest' && loadtestLink) {
+                loadtestLink.classList.add('active');
+            } else if (pageId === 'portscan' && portscanLink) {
+                portscanLink.classList.add('active');
+            } else if (pageId === 'loadtest-instructions' && loadtestInstructionsLink) {
+                loadtestInstructionsLink.classList.add('active');
+            } else if (pageId === 'portscan-instructions' && portscanInstructionsLink) {
+                portscanInstructionsLink.classList.add('active');
+            } else if (pageId === 'agreement' && agreementLink) {
+                agreementLink.classList.add('active');
             }
+            
+            // Скрываем все выпадающие меню после выбора
+            const dropdownContents = document.querySelectorAll('.nav-dropdown-content');
+            dropdownContents.forEach(content => {
+                content.style.display = 'none';
+            });
         }
 
         function toggleStartButton() {
@@ -1475,6 +1975,152 @@ const HTMLTemplate = `
             .catch(error => {
                 console.error('Ошибка получения статистики:', error);
             });
+        }
+
+        // Функции для портсканера
+        let scanUpdateInterval;
+
+        function toggleCustomPorts() {
+            const portType = document.getElementById('portType').value;
+            const customGroup = document.getElementById('customPortsGroup');
+            
+            if (portType === 'custom') {
+                customGroup.style.display = 'block';
+                document.getElementById('customPorts').required = true;
+            } else {
+                customGroup.style.display = 'none';
+                document.getElementById('customPorts').required = false;
+            }
+        }
+
+        function startPortScan() {
+            const form = document.getElementById('portscanForm');
+            const formData = new FormData(form);
+            const config = Object.fromEntries(formData);
+            
+            // Конвертируем числовые значения
+            config.timeout = parseInt(config.timeout);
+            
+            // Переименовываем поля для соответствия Go структуре
+            config.target = config.scanTarget;
+            config.customPorts = config.customPorts || '';
+            
+            delete config.scanTarget;
+            
+            fetch('/portscan/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('startScanBtn').disabled = true;
+                    document.getElementById('stopScanBtn').disabled = false;
+                    document.getElementById('scanStats').style.display = 'grid';
+                    document.getElementById('portResults').style.display = 'none';
+                    scanUpdateInterval = setInterval(updateScanStats, 1000);
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ошибка запроса: ' + error);
+            });
+        }
+
+        function stopPortScan() {
+            fetch('/portscan/stop', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('stopScanBtn').disabled = true;
+            });
+        }
+
+        function updateScanStats() {
+            fetch('/portscan/stats')
+            .then(response => response.json())
+            .then(data => {
+                const statusEl = document.getElementById('scanStatus');
+                
+                if (data.isScanning) {
+                    statusEl.textContent = '🔍 Сканирование портов...';
+                    statusEl.className = 'status running';
+                } else {
+                    const stats = data.stats;
+                    const openCount = stats.open || 0;
+                    const totalCount = stats.total || 0;
+                    
+                    let emoji = '🟢';
+                    let text = 'Сканирование завершено';
+                    if (openCount > 0) {
+                        emoji = '🔴';
+                        text = 'Найдено ' + openCount + ' открытых портов';
+                    }
+                    
+                    statusEl.textContent = emoji + ' ' + text;
+                    statusEl.className = 'status completed';
+                    
+                    // Останавливаем обновления
+                    clearInterval(scanUpdateInterval);
+                    
+                    // Включаем кнопку "Начать сканирование"
+                    document.getElementById('startScanBtn').disabled = false;
+                    document.getElementById('stopScanBtn').disabled = true;
+                    
+                    // Показываем результаты
+                    displayPortResults(data.results);
+                }
+                
+                // Обновляем статистику
+                const stats = data.stats;
+                document.getElementById('totalPortsStat').textContent = stats.total || 0;
+                document.getElementById('openPortsStat').textContent = stats.open || 0;
+                document.getElementById('closedPortsStat').textContent = stats.closed || 0;
+            })
+            .catch(error => {
+                console.error('Ошибка получения статистики сканирования:', error);
+            });
+        }
+
+        function displayPortResults(results) {
+            if (!results || results.length === 0) {
+                return;
+            }
+            
+            const resultsContainer = document.getElementById('portResultsList');
+            resultsContainer.innerHTML = '';
+            
+            // Сортируем результаты: сначала открытые, потом закрытые
+            results.sort((a, b) => {
+                if (a.isOpen && !b.isOpen) return -1;
+                if (!a.isOpen && b.isOpen) return 1;
+                return a.port - b.port;
+            });
+            
+            results.forEach(result => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'port-result';
+                
+                const statusClass = result.isOpen ? 'open' : 'closed';
+                const statusText = result.isOpen ? 'Открыт' : 'Закрыт';
+                
+                resultDiv.innerHTML = 
+                    '<div class="port-info">' +
+                        '<div class="port-number">' + result.port + '</div>' +
+                        '<div>' +
+                            '<div class="port-service">' + (result.service || 'Unknown') + '</div>' +
+                            '<div class="port-description">' + (result.description || 'Неизвестный сервис') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="port-status ' + statusClass + '">' + statusText + '</div>';
+                
+                resultsContainer.appendChild(resultDiv);
+            });
+            
+            document.getElementById('portResults').style.display = 'block';
         }
     </script>
 </body>
