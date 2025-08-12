@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/715kg/loadtester/internal/loadtest"
+	"github.com/715kg/loadtester/internal/pingtest"
 	"github.com/715kg/loadtester/internal/portscan"
 	"github.com/715kg/loadtester/internal/sslcheck"
 	"github.com/715kg/loadtester/internal/templates"
@@ -75,6 +76,11 @@ func main() {
 	http.HandleFunc("/sslcheck/start", sslcheck.StartSSLCheckHandler)
 	http.HandleFunc("/sslcheck/stop", sslcheck.StopSSLCheckHandler)
 	http.HandleFunc("/sslcheck/stats", sslcheck.SSLStatsHandler)
+
+	// Обработчики для Ping тестера
+	http.HandleFunc("/pingtest/start", pingtest.StartPingTestHandler)
+	http.HandleFunc("/pingtest/stop", pingtest.StopPingTestHandler)
+	http.HandleFunc("/pingtest/stats", pingtest.PingStatsHandler)
 
 	// Канал для получения сигналов ОС
 	sigChan := make(chan os.Signal, 1)

@@ -966,6 +966,7 @@ const HTMLTemplate = `
                             <a href="#" class="nav-dropdown-item active" onclick="showPage('loadtest')">Нагрузочный тест</a>
                             <a href="#" class="nav-dropdown-item" onclick="showPage('portscan')">Тест портов</a>
                             <a href="#" class="nav-dropdown-item" onclick="showPage('sslcheck')">SSL/TLS анализ</a>
+                            <a href="#" class="nav-dropdown-item" onclick="showPage('pingtest')">Ping тест</a>
                         </div>
                     </div>
                     <div class="nav-dropdown">
@@ -974,6 +975,7 @@ const HTMLTemplate = `
                             <a href="#" class="nav-dropdown-item" onclick="showPage('loadtest-instructions')">Нагрузочный тест</a>
                             <a href="#" class="nav-dropdown-item" onclick="showPage('portscan-instructions')">Тестирование портов</a>
                             <a href="#" class="nav-dropdown-item" onclick="showPage('sslcheck-instructions')">SSL/TLS анализ</a>
+                            <a href="#" class="nav-dropdown-item" onclick="showPage('pingtest-instructions')">Ping тест</a>
                         </div>
                     </div>
                     <a href="#" class="nav-link" onclick="showPage('agreement')">Соглашение</a>
@@ -1268,6 +1270,110 @@ const HTMLTemplate = `
                 <div id="certificateChain" style="margin-top: 40px; display: none;">
                     <h2 style="color: var(--accent-color); margin-bottom: 20px;">🔗 Цепочка сертификатов</h2>
                     <div id="chainContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-card" id="pingtestPage" style="display: none;">
+            <h1>🏓 Ping тестер</h1>
+            
+            <form id="pingtestForm">
+                <div class="form-group">
+                    <label for="pingTarget">Хост или IP адрес:</label>
+                    <input type="text" id="pingTarget" name="pingTarget" placeholder="google.com или 8.8.8.8" required>
+                    <div class="field-description">Введите доменное имя или IP адрес для ping теста</div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pingCount">Количество пакетов:</label>
+                        <input type="number" id="pingCount" name="pingCount" value="4" min="1" max="100" required>
+                        <div class="field-description">Сколько ping пакетов отправить (1-100)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="pingInterval">Интервал (сек):</label>
+                        <input type="number" id="pingInterval" name="pingInterval" value="1" min="1" max="10" required>
+                        <div class="field-description">Пауза между ping запросами (1-10 секунд)</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pingTimeout">Таймаут (сек):</label>
+                        <input type="number" id="pingTimeout" name="pingTimeout" value="3" min="1" max="30" required>
+                        <div class="field-description">Время ожидания ответа (1-30 секунд)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="pingMode">Режим тестирования:</label>
+                        <select id="pingMode" name="pingMode">
+                            <option value="auto">Автоматический</option>
+                            <option value="tcp">TCP подключение</option>
+                            <option value="dns">DNS резолв</option>
+                        </select>
+                        <div class="field-description">Метод проверки доступности хоста</div>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="buttons">
+                <button type="button" class="start-btn" id="startPingBtn" onclick="startPingTest()">
+                    <span>🏓</span> Начать ping
+                </button>
+                <button type="button" class="stop-btn" id="stopPingBtn" onclick="stopPingTest()" disabled>
+                    <span>⏹️</span> Остановить
+                </button>
+            </div>
+            
+            <div id="pingStatus" class="status ready">Готов к ping тесту</div>
+            
+            <div id="pingResults" style="display: none; margin-top: 40px;">
+                <div class="stats" id="pingOverview">
+                    <div class="stat-card success">
+                        <div class="stat-title">Отправлено</div>
+                        <div class="stat-value" id="packetsSent">0</div>
+                        <div class="stat-subtitle">пакетов</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-title">Получено</div>
+                        <div class="stat-value" id="packetsReceived">0</div>
+                        <div class="stat-subtitle">ответов</div>
+                    </div>
+                    <div class="stat-card error">
+                        <div class="stat-title">Потеряно</div>
+                        <div class="stat-value" id="packetsLost">0</div>
+                        <div class="stat-subtitle"><span id="packetLossRate">0</span>%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Среднее время</div>
+                        <div class="stat-value" id="avgTime">0</div>
+                        <div class="stat-subtitle">мс</div>
+                    </div>
+                </div>
+                
+                <div id="pingTimes" style="margin-top: 40px;">
+                    <h2 style="color: var(--accent-color); margin-bottom: 20px;">⏱️ Статистика времени</h2>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-title">Минимальное</div>
+                            <div class="stat-value" id="minTime">0</div>
+                            <div class="stat-subtitle">мс</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Максимальное</div>
+                            <div class="stat-value" id="maxTime">0</div>
+                            <div class="stat-subtitle">мс</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Общее время</div>
+                            <div class="stat-value" id="totalTime">0</div>
+                            <div class="stat-subtitle">сек</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="pingHistory" style="margin-top: 40px;">
+                    <h2 style="color: var(--accent-color); margin-bottom: 20px;">📊 История ping запросов</h2>
+                    <div id="pingHistoryList"></div>
                 </div>
             </div>
         </div>
@@ -1963,6 +2069,242 @@ const HTMLTemplate = `
             </div>
         </div>
 
+        <div class="main-card" id="pingtest-instructionsPage" style="display: none;">
+            <h1>🏓 Инструкция по Ping тесту</h1>
+            
+            <div class="instructions-content">
+                <div class="intro-section">
+                    <h2>🎯 Что такое Ping тест?</h2>
+                    <p>Ping тест — это базовый сетевой инструмент для проверки доступности удаленного хоста и измерения времени отклика сети. Программа отправляет серию запросов к целевому хосту и измеряет время, необходимое для получения ответа.</p>
+                    <p>Это фундаментальный инструмент диагностики сети, который помогает определить проблемы с подключением, измерить задержку (latency) и оценить качество сетевого соединения.</p>
+                </div>
+
+                <div class="settings-section">
+                    <h2>⚙️ Описание настроек</h2>
+                    
+                    <div class="setting-item">
+                        <h3>🌐 Хост или IP адрес</h3>
+                        <p><strong>Что это:</strong> Целевой сервер для ping теста</p>
+                        <p><strong>Примеры:</strong></p>
+                        <ul>
+                            <li><code>google.com</code> — доменное имя</li>
+                            <li><code>8.8.8.8</code> — публичный DNS Google</li>
+                            <li><code>1.1.1.1</code> — публичный DNS Cloudflare</li>
+                            <li><code>192.168.1.1</code> — локальный роутер</li>
+                            <li><code>ya.ru</code> — российский сайт</li>
+                        </ul>
+                        <p><strong>Важно:</strong> Можно использовать как доменные имена, так и IP адреса</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>📦 Количество пакетов</h3>
+                        <p><strong>Что это:</strong> Сколько ping запросов отправить</p>
+                        <p><strong>Рекомендации:</strong></p>
+                        <ul>
+                            <li><strong>4 пакета</strong> — быстрая проверка (по умолчанию)</li>
+                            <li><strong>10-20 пакетов</strong> — более точная статистика</li>
+                            <li><strong>50-100 пакетов</strong> — детальный анализ качества связи</li>
+                        </ul>
+                        <p><strong>Диапазон:</strong> от 1 до 100 пакетов</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>⏱️ Интервал</h3>
+                        <p><strong>Что это:</strong> Пауза между отправкой ping пакетов</p>
+                        <p><strong>Рекомендации:</strong></p>
+                        <ul>
+                            <li><strong>1 секунда</strong> — стандартный интервал (по умолчанию)</li>
+                            <li><strong>2-3 секунды</strong> — для медленных соединений</li>
+                            <li><strong>0.5 секунды</strong> — для быстрого тестирования</li>
+                        </ul>
+                        <p><strong>Диапазон:</strong> от 1 до 10 секунд</p>
+                        <div class="warning-small">
+                            💡 Слишком частые запросы могут быть заблокированы сервером
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>⏰ Таймаут</h3>
+                        <p><strong>Что это:</strong> Время ожидания ответа на ping запрос</p>
+                        <p><strong>Рекомендации:</strong></p>
+                        <ul>
+                            <li><strong>3 секунды</strong> — стандартное время (по умолчанию)</li>
+                            <li><strong>1-2 секунды</strong> — для быстрых локальных сетей</li>
+                            <li><strong>5-10 секунд</strong> — для медленных или удаленных соединений</li>
+                            <li><strong>15+ секунд</strong> — для спутниковых или очень медленных каналов</li>
+                        </ul>
+                        <p><strong>Диапазон:</strong> от 1 до 30 секунд</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>🔧 Режим тестирования</h3>
+                        <p><strong>Автоматический</strong> — программа сама выбирает лучший метод</p>
+                        <p><strong>TCP подключение</strong> — проверка через TCP соединение (порты 80, 443, 22, 21)</p>
+                        <p><strong>DNS резолв</strong> — проверка через разрешение DNS имен</p>
+                        <div class="warning-small">
+                            ℹ️ Используется TCP вместо ICMP для совместимости с файрволами
+                        </div>
+                    </div>
+                </div>
+
+                <div class="network-section">
+                    <h2>📊 Что показывает ping тест</h2>
+                    
+                    <div class="network-table">
+                        <h3>Основная статистика:</h3>
+                        <ul>
+                            <li><strong>Отправлено пакетов</strong> — количество ping запросов</li>
+                            <li><strong>Получено ответов</strong> — успешные ответы от сервера</li>
+                            <li><strong>Потеряно пакетов</strong> — запросы без ответа</li>
+                            <li><strong>Процент потерь</strong> — показатель качества соединения</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="network-table">
+                        <h3>Время отклика:</h3>
+                        <ul>
+                            <li><strong>Минимальное время</strong> — самый быстрый ответ</li>
+                            <li><strong>Максимальное время</strong> — самый медленный ответ</li>
+                            <li><strong>Среднее время</strong> — средняя задержка</li>
+                            <li><strong>Общее время</strong> — продолжительность всего теста</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="network-table">
+                        <h3>Оценка качества соединения:</h3>
+                        <ul>
+                            <li><strong>0% потерь, < 50мс</strong> — отличное соединение</li>
+                            <li><strong>0-5% потерь, 50-150мс</strong> — хорошее соединение</li>
+                            <li><strong>5-20% потерь, 150-300мс</strong> — удовлетворительное</li>
+                            <li><strong>20-50% потерь, > 300мс</strong> — плохое соединение</li>
+                            <li><strong>> 50% потерь</strong> — серьезные проблемы</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="examples-section">
+                    <h2>📋 Примеры использования</h2>
+                    
+                    <div class="config-example">
+                        <h3>🟢 Быстрая проверка доступности</h3>
+                        <div class="config-box">
+                            <p><strong>Хост:</strong> google.com</p>
+                            <p><strong>Пакетов:</strong> 4</p>
+                            <p><strong>Интервал:</strong> 1 сек</p>
+                            <p><strong>Таймаут:</strong> 3 сек</p>
+                        </div>
+                        <p><em>Стандартная проверка доступности сайта</em></p>
+                    </div>
+
+                    <div class="config-example">
+                        <h3>🟡 Анализ качества соединения</h3>
+                        <div class="config-box">
+                            <p><strong>Хост:</strong> 8.8.8.8</p>
+                            <p><strong>Пакетов:</strong> 20</p>
+                            <p><strong>Интервал:</strong> 1 сек</p>
+                            <p><strong>Таймаут:</strong> 5 сек</p>
+                        </div>
+                        <p><em>Детальная проверка стабильности соединения</em></p>
+                    </div>
+
+                    <div class="config-example">
+                        <h3>🔴 Диагностика локальной сети</h3>
+                        <div class="config-box">
+                            <p><strong>Хост:</strong> 192.168.1.1</p>
+                            <p><strong>Пакетов:</strong> 10</p>
+                            <p><strong>Интервал:</strong> 1 сек</p>
+                            <p><strong>Таймаут:</strong> 2 сек</p>
+                        </div>
+                        <p><em>Проверка доступности роутера или локального сервера</em></p>
+                    </div>
+                </div>
+
+                <div class="results-section">
+                    <h2>📊 Интерпретация результатов</h2>
+                    
+                    <div class="result-item">
+                        <h3>🟢 Потери пакетов</h3>
+                        <p><strong>0%:</strong> Идеальное соединение, все пакеты доставлены</p>
+                        <p><strong>1-5%:</strong> Отличное соединение с незначительными потерями</p>
+                        <p><strong>5-15%:</strong> Хорошее соединение, возможны периодические проблемы</p>
+                        <p><strong>15-25%:</strong> Проблемы с сетью, требует внимания</p>
+                        <p><strong>> 25%:</strong> Серьезные проблемы с подключением</p>
+                    </div>
+
+                    <div class="result-item">
+                        <h3>⏱️ Время отклика (ping)</h3>
+                        <p><strong>< 20мс:</strong> Отличная скорость (локальная сеть, близкие серверы)</p>
+                        <p><strong>20-50мс:</strong> Очень хорошая скорость (региональные серверы)</p>
+                        <p><strong>50-150мс:</strong> Хорошая скорость (национальные серверы)</p>
+                        <p><strong>150-300мс:</strong> Удовлетворительная скорость (международные серверы)</p>
+                        <p><strong>> 300мс:</strong> Медленное соединение (спутниковая связь, перегрузка)</p>
+                    </div>
+
+                    <div class="result-item">
+                        <h3>📈 Стабильность соединения</h3>
+                        <p><strong>Малая разница мин/макс:</strong> Стабильное соединение</p>
+                        <p><strong>Большая разница мин/макс:</strong> Нестабильное соединение</p>
+                        <p><strong>Постепенное увеличение времени:</strong> Возможна перегрузка сети</p>
+                        <p><strong>Случайные таймауты:</strong> Проблемы с маршрутизацией</p>
+                    </div>
+                </div>
+
+                <div class="tips-section">
+                    <h2>💡 Советы и рекомендации</h2>
+                    
+                    <div class="tip-item">
+                        <h3>🎯 Диагностика проблем</h3>
+                        <ul>
+                            <li>Начните с ping локального роутера (192.168.1.1)</li>
+                            <li>Затем проверьте внешний DNS (8.8.8.8)</li>
+                            <li>Проверьте конкретный проблемный сайт</li>
+                            <li>Сравните результаты в разное время суток</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>⚡ Оптимизация тестирования</h3>
+                        <ul>
+                            <li>Используйте проводное подключение для точных измерений</li>
+                            <li>Закройте другие сетевые приложения</li>
+                            <li>Тестируйте несколько серверов для сравнения</li>
+                            <li>Проводите тесты в разное время для полной картины</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>🛡️ Этика и безопасность</h3>
+                        <ul>
+                            <li>Не злоупотребляйте частыми ping запросами</li>
+                            <li>Некоторые серверы блокируют ping для безопасности</li>
+                            <li>Используйте разумные интервалы между запросами</li>
+                            <li>Уважайте ресурсы чужих серверов</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>🔍 Устранение проблем</h3>
+                        <ul>
+                            <li><strong>100% потерь:</strong> Проверьте интернет-подключение</li>
+                            <li><strong>Высокий ping:</strong> Возможна перегрузка сети</li>
+                            <li><strong>Нестабильный ping:</strong> Проблемы с Wi-Fi или провайдером</li>
+                            <li><strong>Таймауты:</strong> Сервер может блокировать ping</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>📈 Мониторинг и анализ</h3>
+                        <ul>
+                            <li>Ведите журнал результатов для отслеживания трендов</li>
+                            <li>Сравнивайте результаты с разных устройств</li>
+                            <li>Используйте ping для мониторинга доступности серверов</li>
+                            <li>Комбинируйте с другими сетевыми тестами</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="main-card" id="agreementPage" style="display: none;">
             <h1>📋 Пользовательское соглашение</h1>
             
@@ -2134,9 +2476,11 @@ const HTMLTemplate = `
             document.getElementById('loadtestPage').style.display = 'none';
             document.getElementById('portscanPage').style.display = 'none';
             document.getElementById('sslcheckPage').style.display = 'none';
+            document.getElementById('pingtestPage').style.display = 'none';
             document.getElementById('loadtest-instructionsPage').style.display = 'none';
             document.getElementById('portscan-instructionsPage').style.display = 'none';
             document.getElementById('sslcheck-instructionsPage').style.display = 'none';
+            document.getElementById('pingtest-instructionsPage').style.display = 'none';
             document.getElementById('agreementPage').style.display = 'none';
             
             // Показываем нужную страницу
@@ -2146,12 +2490,16 @@ const HTMLTemplate = `
                 document.getElementById('portscanPage').style.display = 'block';
             } else if (pageId === 'sslcheck') {
                 document.getElementById('sslcheckPage').style.display = 'block';
+            } else if (pageId === 'pingtest') {
+                document.getElementById('pingtestPage').style.display = 'block';
             } else if (pageId === 'loadtest-instructions') {
                 document.getElementById('loadtest-instructionsPage').style.display = 'block';
             } else if (pageId === 'portscan-instructions') {
                 document.getElementById('portscan-instructionsPage').style.display = 'block';
             } else if (pageId === 'sslcheck-instructions') {
                 document.getElementById('sslcheck-instructionsPage').style.display = 'block';
+            } else if (pageId === 'pingtest-instructions') {
+                document.getElementById('pingtest-instructionsPage').style.display = 'block';
             } else if (pageId === 'agreement') {
                 document.getElementById('agreementPage').style.display = 'block';
             }
@@ -2164,9 +2512,11 @@ const HTMLTemplate = `
             const loadtestLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'loadtest\')"]');
             const portscanLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'portscan\')"]');
             const sslcheckLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'sslcheck\')"]');
+            const pingtestLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'pingtest\')"]');
             const loadtestInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'loadtest-instructions\')"]');
             const portscanInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'portscan-instructions\')"]');
             const sslcheckInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'sslcheck-instructions\')"]');
+            const pingtestInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'pingtest-instructions\')"]');
             const agreementLink = document.querySelector('.nav-link[onclick="showPage(\'agreement\')"]');
             
             if (pageId === 'loadtest' && loadtestLink) {
@@ -2175,12 +2525,16 @@ const HTMLTemplate = `
                 portscanLink.classList.add('active');
             } else if (pageId === 'sslcheck' && sslcheckLink) {
                 sslcheckLink.classList.add('active');
+            } else if (pageId === 'pingtest' && pingtestLink) {
+                pingtestLink.classList.add('active');
             } else if (pageId === 'loadtest-instructions' && loadtestInstructionsLink) {
                 loadtestInstructionsLink.classList.add('active');
             } else if (pageId === 'portscan-instructions' && portscanInstructionsLink) {
                 portscanInstructionsLink.classList.add('active');
             } else if (pageId === 'sslcheck-instructions' && sslcheckInstructionsLink) {
                 sslcheckInstructionsLink.classList.add('active');
+            } else if (pageId === 'pingtest-instructions' && pingtestInstructionsLink) {
+                pingtestInstructionsLink.classList.add('active');
             } else if (pageId === 'agreement' && agreementLink) {
                 agreementLink.classList.add('active');
             }
@@ -2636,6 +2990,169 @@ const HTMLTemplate = `
             }
             
             document.getElementById('sslResults').style.display = 'block';
+        }
+
+        // Функции для Ping тестера
+        let pingUpdateInterval;
+
+        function startPingTest() {
+            const form = document.getElementById('pingtestForm');
+            const formData = new FormData(form);
+            const config = Object.fromEntries(formData);
+            
+            // Конвертируем числовые значения
+            config.count = parseInt(config.pingCount);
+            config.interval = parseInt(config.pingInterval);
+            config.timeout = parseInt(config.pingTimeout);
+            
+            // Переименовываем поля для соответствия Go структуре
+            config.target = config.pingTarget;
+            
+            delete config.pingTarget;
+            delete config.pingCount;
+            delete config.pingInterval;
+            delete config.pingTimeout;
+            delete config.pingMode; // Пока не используем
+            
+            fetch('/pingtest/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('startPingBtn').disabled = true;
+                    document.getElementById('stopPingBtn').disabled = false;
+                    document.getElementById('pingResults').style.display = 'none';
+                    pingUpdateInterval = setInterval(updatePingStats, 500);
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ошибка запроса: ' + error);
+            });
+        }
+
+        function stopPingTest() {
+            fetch('/pingtest/stop', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('stopPingBtn').disabled = true;
+            });
+        }
+
+        function updatePingStats() {
+            fetch('/pingtest/stats')
+            .then(response => response.json())
+            .then(data => {
+                const statusEl = document.getElementById('pingStatus');
+                
+                if (data.isRunning) {
+                    const results = data.results;
+                    statusEl.textContent = '🏓 Ping тест выполняется... (' + results.packetsSent + '/' + (results.packetsSent + results.packetsLost + (4 - results.packetsSent)) + ')';
+                    statusEl.className = 'status running';
+                    
+                    // Обновляем статистику в реальном времени
+                    updatePingDisplay(results);
+                } else {
+                    const results = data.results;
+                    
+                    if (results.error) {
+                        statusEl.textContent = '❌ Ошибка: ' + results.error;
+                        statusEl.className = 'status completed';
+                    } else if (results.isCompleted) {
+                        const lossRate = results.packetLossRate || 0;
+                        let emoji = '🟢';
+                        let text = 'Отличное соединение!';
+                        
+                        if (lossRate > 50) {
+                            emoji = '🔴';
+                            text = 'Серьезные проблемы с сетью';
+                        } else if (lossRate > 20) {
+                            emoji = '🟡';
+                            text = 'Есть потери пакетов';
+                        } else if (lossRate > 0) {
+                            emoji = '🟠';
+                            text = 'Незначительные потери';
+                        }
+                        
+                        statusEl.textContent = emoji + ' Ping тест завершен! ' + text + ' (потери: ' + lossRate.toFixed(1) + '%)';
+                        statusEl.className = 'status completed';
+                        
+                        updatePingDisplay(results);
+                        displayPingHistory(results.pingHistory);
+                    } else {
+                        statusEl.textContent = '⏳ Готов к ping тесту';
+                        statusEl.className = 'status ready';
+                    }
+                    
+                    // Останавливаем обновления
+                    clearInterval(pingUpdateInterval);
+                    
+                    // Включаем кнопку "Начать ping"
+                    document.getElementById('startPingBtn').disabled = false;
+                    document.getElementById('stopPingBtn').disabled = true;
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка получения статистики ping:', error);
+            });
+        }
+
+        function updatePingDisplay(results) {
+            if (!results) return;
+            
+            // Обновляем основную статистику
+            document.getElementById('packetsSent').textContent = results.packetsSent || 0;
+            document.getElementById('packetsReceived').textContent = results.packetsReceived || 0;
+            document.getElementById('packetsLost').textContent = results.packetsLost || 0;
+            document.getElementById('packetLossRate').textContent = (results.packetLossRate || 0).toFixed(1);
+            
+            // Обновляем времена (конвертируем из наносекунд в миллисекунды)
+            document.getElementById('avgTime').textContent = results.avgTime ? 
+                (results.avgTime / 1000000).toFixed(1) : '0';
+            document.getElementById('minTime').textContent = results.minTime ? 
+                (results.minTime / 1000000).toFixed(1) : '0';
+            document.getElementById('maxTime').textContent = results.maxTime ? 
+                (results.maxTime / 1000000).toFixed(1) : '0';
+            document.getElementById('totalTime').textContent = results.totalTime ? 
+                (results.totalTime / 1000000000).toFixed(1) : '0';
+            
+            document.getElementById('pingResults').style.display = 'block';
+        }
+
+        function displayPingHistory(history) {
+            if (!history || history.length === 0) {
+                return;
+            }
+            
+            const historyContainer = document.getElementById('pingHistoryList');
+            historyContainer.innerHTML = '';
+            
+            history.forEach((ping, index) => {
+                const pingDiv = document.createElement('div');
+                pingDiv.className = 'port-result';
+                
+                const statusClass = ping.success ? 'closed' : 'open'; // Инвертируем цвета: зеленый для успеха
+                const statusText = ping.success ? 'Успех' : 'Таймаут';
+                const timeText = ping.success ? (ping.time / 1000000).toFixed(1) + ' мс' : 'N/A';
+                
+                pingDiv.innerHTML = 
+                    '<div class="port-info">' +
+                        '<div class="port-number">#' + ping.sequence + '</div>' +
+                        '<div>' +
+                            '<div class="port-service">Ping запрос</div>' +
+                            '<div class="port-description">' + new Date(ping.timestamp).toLocaleTimeString('ru-RU') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="port-status ' + statusClass + '">' + statusText + ' ' + timeText + '</div>';
+                
+                historyContainer.appendChild(pingDiv);
+            });
         }
     </script>
 </body>
