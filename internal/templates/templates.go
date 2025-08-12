@@ -967,6 +967,7 @@ const HTMLTemplate = `
                             <a href="#" class="nav-dropdown-item" onclick="showPage('portscan')">Тест портов</a>
                             <a href="#" class="nav-dropdown-item" onclick="showPage('sslcheck')">SSL/TLS анализ</a>
                             <a href="#" class="nav-dropdown-item" onclick="showPage('pingtest')">Ping тест</a>
+                            <a href="#" class="nav-dropdown-item" onclick="showPage('dnstest')">DNS тест</a>
                         </div>
                     </div>
                     <div class="nav-dropdown">
@@ -976,6 +977,7 @@ const HTMLTemplate = `
                             <a href="#" class="nav-dropdown-item" onclick="showPage('portscan-instructions')">Тестирование портов</a>
                             <a href="#" class="nav-dropdown-item" onclick="showPage('sslcheck-instructions')">SSL/TLS анализ</a>
                             <a href="#" class="nav-dropdown-item" onclick="showPage('pingtest-instructions')">Ping тест</a>
+                            <a href="#" class="nav-dropdown-item" onclick="showPage('dnstest-instructions')">DNS тест</a>
                         </div>
                     </div>
                     <a href="#" class="nav-link" onclick="showPage('agreement')">Соглашение</a>
@@ -1374,6 +1376,145 @@ const HTMLTemplate = `
                 <div id="pingHistory" style="margin-top: 40px;">
                     <h2 style="color: var(--accent-color); margin-bottom: 20px;">📊 История ping запросов</h2>
                     <div id="pingHistoryList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-card" id="dnstestPage" style="display: none;">
+            <h1>🌐 DNS тестер</h1>
+            
+            <form id="dnstestForm">
+                <div class="form-group">
+                    <label for="dnsTarget">Домен для проверки:</label>
+                    <input type="text" id="dnsTarget" name="dnsTarget" placeholder="example.com" required>
+                    <div class="field-description">Введите доменное имя для проверки DNS записей (без http:// и www.)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="recordTypes">Типы DNS записей:</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 8px;">
+                        <label class="checkbox-container" style="margin: 0; padding: 8px 12px; max-width: none;">
+                            <input type="checkbox" id="recordA" name="recordTypes" value="A" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-text">A (IPv4)</span>
+                        </label>
+                        <label class="checkbox-container" style="margin: 0; padding: 8px 12px; max-width: none;">
+                            <input type="checkbox" id="recordAAAA" name="recordTypes" value="AAAA" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-text">AAAA (IPv6)</span>
+                        </label>
+                        <label class="checkbox-container" style="margin: 0; padding: 8px 12px; max-width: none;">
+                            <input type="checkbox" id="recordMX" name="recordTypes" value="MX" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-text">MX (Почта)</span>
+                        </label>
+                        <label class="checkbox-container" style="margin: 0; padding: 8px 12px; max-width: none;">
+                            <input type="checkbox" id="recordCNAME" name="recordTypes" value="CNAME" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-text">CNAME</span>
+                        </label>
+                        <label class="checkbox-container" style="margin: 0; padding: 8px 12px; max-width: none;">
+                            <input type="checkbox" id="recordTXT" name="recordTypes" value="TXT" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-text">TXT</span>
+                        </label>
+                        <label class="checkbox-container" style="margin: 0; padding: 8px 12px; max-width: none;">
+                            <input type="checkbox" id="recordNS" name="recordTypes" value="NS" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-text">NS</span>
+                        </label>
+                    </div>
+                    <div class="field-description">Выберите типы DNS записей для проверки</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dnsServers">DNS серверы:</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 8px;">
+                        <label class="checkbox-container" style="margin: 0; padding: 8px 12px; max-width: none;">
+                            <input type="checkbox" id="dns888" name="dnsServers" value="8.8.8.8" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-text">Google (8.8.8.8)</span>
+                        </label>
+                        <label class="checkbox-container" style="margin: 0; padding: 8px 12px; max-width: none;">
+                            <input type="checkbox" id="dns111" name="dnsServers" value="1.1.1.1" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-text">Cloudflare (1.1.1.1)</span>
+                        </label>
+                        <label class="checkbox-container" style="margin: 0; padding: 8px 12px; max-width: none;">
+                            <input type="checkbox" id="dnsOpenDNS" name="dnsServers" value="208.67.222.222" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-text">OpenDNS</span>
+                        </label>
+                        <label class="checkbox-container" style="margin: 0; padding: 8px 12px; max-width: none;">
+                            <input type="checkbox" id="dnsYandex" name="dnsServers" value="77.88.8.8">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-text">Yandex DNS</span>
+                        </label>
+                    </div>
+                    <div class="field-description">Выберите DNS серверы для тестирования</div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dnsTimeout">Таймаут (сек):</label>
+                        <input type="number" id="dnsTimeout" name="dnsTimeout" value="5" min="1" max="30" required>
+                        <div class="field-description">Время ожидания ответа от DNS сервера</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="dnsMode">Режим тестирования:</label>
+                        <select id="dnsMode" name="dnsMode">
+                            <option value="all">Все записи на всех серверах</option>
+                            <option value="fast">Быстрая проверка</option>
+                            <option value="detailed">Детальный анализ</option>
+                        </select>
+                        <div class="field-description">Объем тестирования DNS записей</div>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="buttons">
+                <button type="button" class="start-btn" id="startDNSBtn" onclick="startDNSTest()">
+                    <span>🌐</span> Начать DNS тест
+                </button>
+                <button type="button" class="stop-btn" id="stopDNSBtn" onclick="stopDNSTest()" disabled>
+                    <span>⏹️</span> Остановить
+                </button>
+            </div>
+            
+            <div id="dnsStatus" class="status ready">Готов к DNS тесту</div>
+            
+            <div id="dnsResults" style="display: none; margin-top: 40px;">
+                <div class="stats" id="dnsOverview">
+                    <div class="stat-card success">
+                        <div class="stat-title">Всего запросов</div>
+                        <div class="stat-value" id="totalRecords">0</div>
+                        <div class="stat-subtitle">DNS записей</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-title">Успешных</div>
+                        <div class="stat-value" id="successfulLookups">0</div>
+                        <div class="stat-subtitle"><span id="successRate">0</span>%</div>
+                    </div>
+                    <div class="stat-card error">
+                        <div class="stat-title">Неудачных</div>
+                        <div class="stat-value" id="failedLookups">0</div>
+                        <div class="stat-subtitle">запросов</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Время теста</div>
+                        <div class="stat-value" id="totalTestTime">0</div>
+                        <div class="stat-subtitle">сек</div>
+                    </div>
+                </div>
+                
+                <div id="serverStats" style="margin-top: 40px;">
+                    <h2 style="color: var(--accent-color); margin-bottom: 20px;">🖥️ Статистика DNS серверов</h2>
+                    <div id="serverStatsList"></div>
+                </div>
+                
+                <div id="dnsRecords" style="margin-top: 40px;">
+                    <h2 style="color: var(--accent-color); margin-bottom: 20px;">📋 DNS записи</h2>
+                    <div id="dnsRecordsList"></div>
                 </div>
             </div>
         </div>
@@ -2305,6 +2446,244 @@ const HTMLTemplate = `
             </div>
         </div>
 
+        <div class="main-card" id="dnstest-instructionsPage" style="display: none;">
+            <h1>🌐 Инструкция по DNS тесту</h1>
+            
+            <div class="instructions-content">
+                <div class="intro-section">
+                    <h2>🎯 Что такое DNS тест?</h2>
+                    <p>DNS тест — это процесс проверки системы доменных имен (Domain Name System), которая переводит человекочитаемые доменные имена в IP-адреса. Программа запрашивает различные типы DNS записей у разных DNS серверов и анализирует результаты.</p>
+                    <p>Это важный инструмент для диагностики проблем с доступностью сайтов, настройкой почты, проверкой пропагации DNS изменений и анализа производительности DNS серверов.</p>
+                </div>
+
+                <div class="settings-section">
+                    <h2>⚙️ Описание настроек</h2>
+                    
+                    <div class="setting-item">
+                        <h3>🌐 Домен для проверки</h3>
+                        <p><strong>Что это:</strong> Доменное имя для анализа DNS записей</p>
+                        <p><strong>Примеры:</strong></p>
+                        <ul>
+                            <li><code>google.com</code> — основной домен</li>
+                            <li><code>mail.google.com</code> — поддомен</li>
+                            <li><code>ya.ru</code> — российский домен</li>
+                            <li><code>github.io</code> — домен третьего уровня</li>
+                        </ul>
+                        <p><strong>Важно:</strong> Вводите только доменное имя без http://, https:// и www.</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>📋 Типы DNS записей</h3>
+                        <p><strong>A записи (IPv4):</strong> Основные IP адреса сайта</p>
+                        <p><strong>AAAA записи (IPv6):</strong> IPv6 адреса для современных сетей</p>
+                        <p><strong>MX записи (Почта):</strong> Серверы для обработки электронной почты</p>
+                        <p><strong>CNAME записи:</strong> Канонические имена (алиасы доменов)</p>
+                        <p><strong>TXT записи:</strong> Текстовая информация (SPF, DKIM, верификация)</p>
+                        <p><strong>NS записи:</strong> Серверы имен, отвечающие за домен</p>
+                        <div class="warning-small">
+                            💡 Выберите нужные типы записей или оставьте все для полного анализа
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>🖥️ DNS серверы</h3>
+                        <p><strong>Google DNS (8.8.8.8):</strong> Быстрый и надежный публичный DNS</p>
+                        <p><strong>Cloudflare DNS (1.1.1.1):</strong> Фокус на приватность и скорость</p>
+                        <p><strong>OpenDNS (208.67.222.222):</strong> DNS с фильтрацией контента</p>
+                        <p><strong>Yandex DNS (77.88.8.8):</strong> Российский DNS сервер</p>
+                        <div class="warning-small">
+                            ℹ️ Тестирование на разных серверах помогает выявить проблемы пропагации
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>⏰ Таймаут</h3>
+                        <p><strong>Что это:</strong> Время ожидания ответа от DNS сервера</p>
+                        <p><strong>Рекомендации:</strong></p>
+                        <ul>
+                            <li><strong>3-5 секунд</strong> — стандартное время (рекомендуется)</li>
+                            <li><strong>1-2 секунды</strong> — для быстрых локальных DNS</li>
+                            <li><strong>10-15 секунд</strong> — для медленных соединений</li>
+                            <li><strong>20+ секунд</strong> — для проблемных DNS серверов</li>
+                        </ul>
+                        <p><strong>Диапазон:</strong> от 1 до 30 секунд</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>🔧 Режим тестирования</h3>
+                        <p><strong>Все записи на всех серверах:</strong> Полный анализ (по умолчанию)</p>
+                        <p><strong>Быстрая проверка:</strong> Только основные записи (A, MX)</p>
+                        <p><strong>Детальный анализ:</strong> Расширенная проверка с дополнительной информацией</p>
+                        <div class="warning-small">
+                            💡 Полный анализ дает максимум информации, но занимает больше времени
+                        </div>
+                    </div>
+                </div>
+
+                <div class="network-section">
+                    <h2>📊 Что показывает DNS тест</h2>
+                    
+                    <div class="network-table">
+                        <h3>Основная статистика:</h3>
+                        <ul>
+                            <li><strong>Всего запросов</strong> — количество DNS запросов</li>
+                            <li><strong>Успешных запросов</strong> — получены корректные ответы</li>
+                            <li><strong>Неудачных запросов</strong> — ошибки или таймауты</li>
+                            <li><strong>Процент успеха</strong> — общая надежность DNS</li>
+                            <li><strong>Время теста</strong> — продолжительность проверки</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="network-table">
+                        <h3>Статистика DNS серверов:</h3>
+                        <ul>
+                            <li><strong>Доступность</strong> — отвечает ли сервер на запросы</li>
+                            <li><strong>Среднее время ответа</strong> — скорость обработки запросов</li>
+                            <li><strong>Минимальное/максимальное время</strong> — разброс производительности</li>
+                            <li><strong>Успешные/неудачные запросы</strong> — надежность сервера</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="network-table">
+                        <h3>DNS записи по типам:</h3>
+                        <ul>
+                            <li><strong>Значения записей</strong> — IP адреса, серверы, текст</li>
+                            <li><strong>Время ответа</strong> — скорость получения каждой записи</li>
+                            <li><strong>Сервер источник</strong> — какой DNS сервер предоставил данные</li>
+                            <li><strong>Статус</strong> — найдена запись или произошла ошибка</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="examples-section">
+                    <h2>📋 Примеры использования</h2>
+                    
+                    <div class="config-example">
+                        <h3>🟢 Быстрая проверка сайта</h3>
+                        <div class="config-box">
+                            <p><strong>Домен:</strong> example.com</p>
+                            <p><strong>Записи:</strong> A, AAAA, MX</p>
+                            <p><strong>Серверы:</strong> Google, Cloudflare</p>
+                            <p><strong>Таймаут:</strong> 5 сек</p>
+                        </div>
+                        <p><em>Проверка основных DNS записей популярными серверами</em></p>
+                    </div>
+
+                    <div class="config-example">
+                        <h3>🟡 Диагностика почтовых проблем</h3>
+                        <div class="config-box">
+                            <p><strong>Домен:</strong> company.com</p>
+                            <p><strong>Записи:</strong> MX, TXT</p>
+                            <p><strong>Серверы:</strong> Все доступные</p>
+                            <p><strong>Таймаут:</strong> 10 сек</p>
+                        </div>
+                        <p><em>Анализ настроек почты и SPF записей</em></p>
+                    </div>
+
+                    <div class="config-example">
+                        <h3>🔴 Полный анализ домена</h3>
+                        <div class="config-box">
+                            <p><strong>Домен:</strong> mysite.ru</p>
+                            <p><strong>Записи:</strong> Все типы</p>
+                            <p><strong>Серверы:</strong> Все серверы</p>
+                            <p><strong>Таймаут:</strong> 15 сек</p>
+                        </div>
+                        <p><em>Комплексная проверка всех DNS настроек</em></p>
+                    </div>
+                </div>
+
+                <div class="results-section">
+                    <h2>📊 Интерпретация результатов</h2>
+                    
+                    <div class="result-item">
+                        <h3>🟢 Процент успешных запросов</h3>
+                        <p><strong>95-100%:</strong> Отличная настройка DNS, все работает корректно</p>
+                        <p><strong>80-95%:</strong> Хорошие результаты, возможны незначительные проблемы</p>
+                        <p><strong>60-80%:</strong> Есть проблемы, требующие внимания</p>
+                        <p><strong>< 60%:</strong> Серьезные проблемы с DNS настройками</p>
+                    </div>
+
+                    <div class="result-item">
+                        <h3>⏱️ Время ответа DNS серверов</h3>
+                        <p><strong>< 50мс:</strong> Отличная скорость (локальные или быстрые серверы)</p>
+                        <p><strong>50-200мс:</strong> Хорошая скорость (обычные публичные DNS)</p>
+                        <p><strong>200-500мс:</strong> Удовлетворительная скорость</p>
+                        <p><strong>> 500мс:</strong> Медленные DNS серверы, стоит сменить</p>
+                    </div>
+
+                    <div class="result-item">
+                        <h3>📋 Анализ DNS записей</h3>
+                        <p><strong>A записи:</strong> Должны указывать на рабочие IP адреса</p>
+                        <p><strong>MX записи:</strong> Необходимы для работы электронной почты</p>
+                        <p><strong>CNAME записи:</strong> Не должны создавать циклические ссылки</p>
+                        <p><strong>TXT записи:</strong> Важны для SPF, DKIM и верификации домена</p>
+                    </div>
+
+                    <div class="result-item">
+                        <h3>🔍 Диагностика проблем</h3>
+                        <p><strong>Разные результаты на разных серверах:</strong> Проблемы с пропагацией DNS</p>
+                        <p><strong>Таймауты:</strong> Проблемы с сетью или перегрузка DNS сервера</p>
+                        <p><strong>Отсутствие записей:</strong> Неправильная настройка DNS зоны</p>
+                        <p><strong>Медленные ответы:</strong> Неоптимальный выбор DNS сервера</p>
+                    </div>
+                </div>
+
+                <div class="tips-section">
+                    <h2>💡 Советы и рекомендации</h2>
+                    
+                    <div class="tip-item">
+                        <h3>🎯 Диагностика DNS проблем</h3>
+                        <ul>
+                            <li>Проверьте домен на нескольких DNS серверах</li>
+                            <li>Сравните результаты с ожидаемыми настройками</li>
+                            <li>Обратите внимание на время ответа разных серверов</li>
+                            <li>Проверьте критически важные записи (A, MX)</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>⚡ Оптимизация DNS</h3>
+                        <ul>
+                            <li>Используйте быстрые и надежные DNS серверы</li>
+                            <li>Настройте правильные TTL значения</li>
+                            <li>Избегайте слишком длинных цепочек CNAME</li>
+                            <li>Регулярно проверяйте актуальность DNS записей</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>🛡️ Безопасность DNS</h3>
+                        <ul>
+                            <li>Используйте DNS серверы с поддержкой DNSSEC</li>
+                            <li>Настройте SPF и DKIM записи для почты</li>
+                            <li>Регулярно мониторьте изменения DNS записей</li>
+                            <li>Используйте надежных DNS провайдеров</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>🔍 Устранение типичных проблем</h3>
+                        <ul>
+                            <li><strong>Сайт не открывается:</strong> Проверьте A и AAAA записи</li>
+                            <li><strong>Не работает почта:</strong> Проверьте MX и TXT записи</li>
+                            <li><strong>Медленная загрузка:</strong> Смените DNS сервер на более быстрый</li>
+                            <li><strong>Разные результаты:</strong> Дождитесь полной пропагации DNS (до 48 часов)</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>📈 Мониторинг и обслуживание</h3>
+                        <ul>
+                            <li>Регулярно проверяйте DNS записи после изменений</li>
+                            <li>Мониторьте время ответа DNS серверов</li>
+                            <li>Ведите документацию DNS настроек</li>
+                            <li>Настройте уведомления об изменениях DNS</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="main-card" id="agreementPage" style="display: none;">
             <h1>📋 Пользовательское соглашение</h1>
             
@@ -2477,10 +2856,12 @@ const HTMLTemplate = `
             document.getElementById('portscanPage').style.display = 'none';
             document.getElementById('sslcheckPage').style.display = 'none';
             document.getElementById('pingtestPage').style.display = 'none';
+            document.getElementById('dnstestPage').style.display = 'none';
             document.getElementById('loadtest-instructionsPage').style.display = 'none';
             document.getElementById('portscan-instructionsPage').style.display = 'none';
             document.getElementById('sslcheck-instructionsPage').style.display = 'none';
             document.getElementById('pingtest-instructionsPage').style.display = 'none';
+            document.getElementById('dnstest-instructionsPage').style.display = 'none';
             document.getElementById('agreementPage').style.display = 'none';
             
             // Показываем нужную страницу
@@ -2492,6 +2873,8 @@ const HTMLTemplate = `
                 document.getElementById('sslcheckPage').style.display = 'block';
             } else if (pageId === 'pingtest') {
                 document.getElementById('pingtestPage').style.display = 'block';
+            } else if (pageId === 'dnstest') {
+                document.getElementById('dnstestPage').style.display = 'block';
             } else if (pageId === 'loadtest-instructions') {
                 document.getElementById('loadtest-instructionsPage').style.display = 'block';
             } else if (pageId === 'portscan-instructions') {
@@ -2500,6 +2883,8 @@ const HTMLTemplate = `
                 document.getElementById('sslcheck-instructionsPage').style.display = 'block';
             } else if (pageId === 'pingtest-instructions') {
                 document.getElementById('pingtest-instructionsPage').style.display = 'block';
+            } else if (pageId === 'dnstest-instructions') {
+                document.getElementById('dnstest-instructionsPage').style.display = 'block';
             } else if (pageId === 'agreement') {
                 document.getElementById('agreementPage').style.display = 'block';
             }
@@ -2513,10 +2898,12 @@ const HTMLTemplate = `
             const portscanLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'portscan\')"]');
             const sslcheckLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'sslcheck\')"]');
             const pingtestLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'pingtest\')"]');
+            const dnstestLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'dnstest\')"]');
             const loadtestInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'loadtest-instructions\')"]');
             const portscanInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'portscan-instructions\')"]');
             const sslcheckInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'sslcheck-instructions\')"]');
             const pingtestInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'pingtest-instructions\')"]');
+            const dnstestInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'dnstest-instructions\')"]');
             const agreementLink = document.querySelector('.nav-link[onclick="showPage(\'agreement\')"]');
             
             if (pageId === 'loadtest' && loadtestLink) {
@@ -2527,6 +2914,8 @@ const HTMLTemplate = `
                 sslcheckLink.classList.add('active');
             } else if (pageId === 'pingtest' && pingtestLink) {
                 pingtestLink.classList.add('active');
+            } else if (pageId === 'dnstest' && dnstestLink) {
+                dnstestLink.classList.add('active');
             } else if (pageId === 'loadtest-instructions' && loadtestInstructionsLink) {
                 loadtestInstructionsLink.classList.add('active');
             } else if (pageId === 'portscan-instructions' && portscanInstructionsLink) {
@@ -2535,6 +2924,8 @@ const HTMLTemplate = `
                 sslcheckInstructionsLink.classList.add('active');
             } else if (pageId === 'pingtest-instructions' && pingtestInstructionsLink) {
                 pingtestInstructionsLink.classList.add('active');
+            } else if (pageId === 'dnstest-instructions' && dnstestInstructionsLink) {
+                dnstestInstructionsLink.classList.add('active');
             } else if (pageId === 'agreement' && agreementLink) {
                 agreementLink.classList.add('active');
             }
@@ -3152,6 +3543,225 @@ const HTMLTemplate = `
                     '<div class="port-status ' + statusClass + '">' + statusText + ' ' + timeText + '</div>';
                 
                 historyContainer.appendChild(pingDiv);
+            });
+        }
+
+        // Функции для DNS тестера
+        let dnsUpdateInterval;
+
+        function startDNSTest() {
+            const form = document.getElementById('dnstestForm');
+            const formData = new FormData(form);
+            
+            // Собираем выбранные типы записей
+            const recordTypes = [];
+            const recordCheckboxes = document.querySelectorAll('input[name="recordTypes"]:checked');
+            recordCheckboxes.forEach(checkbox => {
+                recordTypes.push(checkbox.value);
+            });
+            
+            // Собираем выбранные DNS серверы
+            const dnsServers = [];
+            const serverCheckboxes = document.querySelectorAll('input[name="dnsServers"]:checked');
+            serverCheckboxes.forEach(checkbox => {
+                dnsServers.push(checkbox.value);
+            });
+            
+            if (recordTypes.length === 0) {
+                alert('Выберите хотя бы один тип DNS записи');
+                return;
+            }
+            
+            if (dnsServers.length === 0) {
+                alert('Выберите хотя бы один DNS сервер');
+                return;
+            }
+            
+            const config = {
+                domain: formData.get('dnsTarget'),
+                recordTypes: recordTypes,
+                dnsServers: dnsServers,
+                timeout: parseInt(formData.get('dnsTimeout'))
+            };
+            
+            fetch('/dnstest/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('startDNSBtn').disabled = true;
+                    document.getElementById('stopDNSBtn').disabled = false;
+                    document.getElementById('dnsResults').style.display = 'none';
+                    dnsUpdateInterval = setInterval(updateDNSStats, 500);
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ошибка запроса: ' + error);
+            });
+        }
+
+        function stopDNSTest() {
+            fetch('/dnstest/stop', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('stopDNSBtn').disabled = true;
+            });
+        }
+
+        function updateDNSStats() {
+            fetch('/dnstest/stats')
+            .then(response => response.json())
+            .then(data => {
+                const statusEl = document.getElementById('dnsStatus');
+                
+                if (data.isRunning) {
+                    statusEl.textContent = '🌐 DNS тест выполняется...';
+                    statusEl.className = 'status running';
+                    
+                    // Обновляем статистику в реальном времени
+                    if (data.results) {
+                        updateDNSDisplay(data.results);
+                    }
+                } else {
+                    const results = data.results;
+                    
+                    if (results.error) {
+                        statusEl.textContent = '❌ Ошибка: ' + results.error;
+                        statusEl.className = 'status completed';
+                    } else if (results.isCompleted) {
+                        const successRate = results.summary.successRate || 0;
+                        let emoji = '🟢';
+                        let text = 'Отличные результаты!';
+                        
+                        if (successRate < 50) {
+                            emoji = '🔴';
+                            text = 'Много ошибок DNS';
+                        } else if (successRate < 80) {
+                            emoji = '🟡';
+                            text = 'Есть проблемы с DNS';
+                        } else if (successRate < 95) {
+                            emoji = '🟠';
+                            text = 'Хорошие результаты';
+                        }
+                        
+                        statusEl.textContent = emoji + ' DNS тест завершен! ' + text + ' (' + successRate.toFixed(1) + '% успешных)';
+                        statusEl.className = 'status completed';
+                        
+                        updateDNSDisplay(results);
+                        displayDNSRecords(results.records);
+                        displayServerStats(results.serverStats);
+                    } else {
+                        statusEl.textContent = '⏳ Готов к DNS тесту';
+                        statusEl.className = 'status ready';
+                    }
+                    
+                    // Останавливаем обновления
+                    clearInterval(dnsUpdateInterval);
+                    
+                    // Включаем кнопку "Начать DNS тест"
+                    document.getElementById('startDNSBtn').disabled = false;
+                    document.getElementById('stopDNSBtn').disabled = true;
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка получения статистики DNS:', error);
+            });
+        }
+
+        function updateDNSDisplay(results) {
+            if (!results) return;
+            
+            // Обновляем основную статистику
+            document.getElementById('totalRecords').textContent = results.summary.totalRecords || 0;
+            document.getElementById('successfulLookups').textContent = results.summary.successfulLookups || 0;
+            document.getElementById('failedLookups').textContent = results.summary.failedLookups || 0;
+            document.getElementById('successRate').textContent = (results.summary.successRate || 0).toFixed(1);
+            document.getElementById('totalTestTime').textContent = results.totalTime ? 
+                (results.totalTime / 1000000000).toFixed(1) : '0';
+            
+            document.getElementById('dnsResults').style.display = 'block';
+        }
+
+        function displayServerStats(serverStats) {
+            if (!serverStats || serverStats.length === 0) {
+                return;
+            }
+            
+            const statsContainer = document.getElementById('serverStatsList');
+            statsContainer.innerHTML = '';
+            
+            serverStats.forEach(stat => {
+                const statDiv = document.createElement('div');
+                statDiv.className = 'setting-item';
+                
+                const availableClass = stat.available ? 'success' : 'error';
+                const availableText = stat.available ? 'Доступен' : 'Недоступен';
+                const avgTime = stat.avgTime ? (stat.avgTime / 1000000).toFixed(1) + ' мс' : 'N/A';
+                
+                statDiv.innerHTML = 
+                    '<h3>' + stat.server + ' <span style="color: var(--' + (stat.available ? 'success' : 'error') + '-color);">(' + availableText + ')</span></h3>' +
+                    '<p><strong>Всего запросов:</strong> ' + stat.totalQueries + '</p>' +
+                    '<p><strong>Успешных:</strong> ' + stat.successful + '</p>' +
+                    '<p><strong>Неудачных:</strong> ' + stat.failed + '</p>' +
+                    '<p><strong>Среднее время:</strong> ' + avgTime + '</p>' +
+                    (stat.minTime ? '<p><strong>Мин/Макс время:</strong> ' + (stat.minTime / 1000000).toFixed(1) + ' / ' + (stat.maxTime / 1000000).toFixed(1) + ' мс</p>' : '');
+                
+                statsContainer.appendChild(statDiv);
+            });
+        }
+
+        function displayDNSRecords(records) {
+            if (!records || records.length === 0) {
+                return;
+            }
+            
+            const recordsContainer = document.getElementById('dnsRecordsList');
+            recordsContainer.innerHTML = '';
+            
+            // Группируем записи по типу
+            const recordsByType = {};
+            records.forEach(record => {
+                if (!recordsByType[record.type]) {
+                    recordsByType[record.type] = [];
+                }
+                recordsByType[record.type].push(record);
+            });
+            
+            // Отображаем записи по типам
+            Object.keys(recordsByType).forEach(type => {
+                const typeDiv = document.createElement('div');
+                typeDiv.className = 'setting-item';
+                
+                let typeContent = '<h3>' + type + ' записи</h3>';
+                
+                recordsByType[type].forEach(record => {
+                    const statusClass = record.success ? 'closed' : 'open'; // Инвертируем: зеленый для успеха
+                    const statusText = record.success ? 'Найдено' : 'Ошибка';
+                    const timeText = (record.responseTime / 1000000).toFixed(1) + ' мс';
+                    const value = record.success ? record.value : record.error;
+                    
+                    typeContent += 
+                        '<div class="port-result" style="margin-bottom: 8px;">' +
+                            '<div class="port-info">' +
+                                '<div class="port-number">' + record.server + '</div>' +
+                                '<div>' +
+                                    '<div class="port-service">' + (record.success ? value : 'Ошибка') + '</div>' +
+                                    '<div class="port-description">' + timeText + '</div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="port-status ' + statusClass + '">' + statusText + '</div>' +
+                        '</div>';
+                });
+                
+                typeDiv.innerHTML = typeContent;
+                recordsContainer.appendChild(typeDiv);
             });
         }
     </script>
