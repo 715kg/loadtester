@@ -14,6 +14,7 @@ import (
 
 	"github.com/715kg/loadtester/internal/loadtest"
 	"github.com/715kg/loadtester/internal/portscan"
+	"github.com/715kg/loadtester/internal/sslcheck"
 	"github.com/715kg/loadtester/internal/templates"
 	"github.com/715kg/loadtester/pkg/info"
 )
@@ -69,6 +70,11 @@ func main() {
 	http.HandleFunc("/portscan/stop", portscan.StopPortScanHandler)
 	http.HandleFunc("/portscan/stats", portscan.PortScanStatsHandler)
 	http.HandleFunc("/portscan/types", portscan.GetPortTypesHandler)
+
+	// Обработчики для SSL анализатора
+	http.HandleFunc("/sslcheck/start", sslcheck.StartSSLCheckHandler)
+	http.HandleFunc("/sslcheck/stop", sslcheck.StopSSLCheckHandler)
+	http.HandleFunc("/sslcheck/stats", sslcheck.SSLStatsHandler)
 
 	// Канал для получения сигналов ОС
 	sigChan := make(chan os.Signal, 1)

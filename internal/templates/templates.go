@@ -965,6 +965,7 @@ const HTMLTemplate = `
                         <div class="nav-dropdown-content">
                             <a href="#" class="nav-dropdown-item active" onclick="showPage('loadtest')">Нагрузочный тест</a>
                             <a href="#" class="nav-dropdown-item" onclick="showPage('portscan')">Тест портов</a>
+                            <a href="#" class="nav-dropdown-item" onclick="showPage('sslcheck')">SSL/TLS анализ</a>
                         </div>
                     </div>
                     <div class="nav-dropdown">
@@ -972,6 +973,7 @@ const HTMLTemplate = `
                         <div class="nav-dropdown-content">
                             <a href="#" class="nav-dropdown-item" onclick="showPage('loadtest-instructions')">Нагрузочный тест</a>
                             <a href="#" class="nav-dropdown-item" onclick="showPage('portscan-instructions')">Тестирование портов</a>
+                            <a href="#" class="nav-dropdown-item" onclick="showPage('sslcheck-instructions')">SSL/TLS анализ</a>
                         </div>
                     </div>
                     <a href="#" class="nav-link" onclick="showPage('agreement')">Соглашение</a>
@@ -1178,6 +1180,95 @@ const HTMLTemplate = `
             <div id="portResults" style="display: none; margin-top: 40px;">
                 <h2 style="color: var(--accent-color); margin-bottom: 20px;">📋 Результаты сканирования</h2>
                 <div id="portResultsList"></div>
+            </div>
+        </div>
+
+        <div class="main-card" id="sslcheckPage" style="display: none;">
+            <h1>🔒 SSL/TLS анализатор</h1>
+            
+            <form id="sslcheckForm">
+                <div class="form-group">
+                    <label for="sslTarget">Домен или IP адрес:</label>
+                    <input type="text" id="sslTarget" name="sslTarget" placeholder="example.com или 192.168.1.1" required>
+                    <div class="field-description">Введите доменное имя или IP адрес для анализа SSL/TLS сертификата</div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sslPort">Порт:</label>
+                        <input type="number" id="sslPort" name="sslPort" value="443" min="1" max="65535" required>
+                        <div class="field-description">Порт для подключения (обычно 443 для HTTPS)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="sslTimeout">Таймаут (сек):</label>
+                        <input type="number" id="sslTimeout" name="sslTimeout" value="10" min="1" max="60" required>
+                        <div class="field-description">Время ожидания подключения к серверу</div>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="buttons">
+                <button type="button" class="start-btn" id="startSSLBtn" onclick="startSSLCheck()">
+                    <span>🔒</span> Начать анализ
+                </button>
+                <button type="button" class="stop-btn" id="stopSSLBtn" onclick="stopSSLCheck()" disabled>
+                    <span>⏹️</span> Остановить
+                </button>
+            </div>
+            
+            <div id="sslStatus" class="status ready">Готов к анализу SSL/TLS</div>
+            
+            <div id="sslResults" style="display: none; margin-top: 40px;">
+                <div class="stats" id="sslOverview">
+                    <div class="stat-card" id="securityGradeCard">
+                        <div class="stat-title">Оценка безопасности</div>
+                        <div class="stat-value" id="securityGrade">-</div>
+                        <div class="stat-subtitle">Общая оценка SSL/TLS</div>
+                    </div>
+                    <div class="stat-card" id="tlsVersionCard">
+                        <div class="stat-title">Версия TLS</div>
+                        <div class="stat-value" id="tlsVersion">-</div>
+                        <div class="stat-subtitle">Используемый протокол</div>
+                    </div>
+                    <div class="stat-card" id="responseTimeCard">
+                        <div class="stat-title">Время подключения</div>
+                        <div class="stat-value" id="responseTime">-</div>
+                        <div class="stat-subtitle">Скорость установки соединения</div>
+                    </div>
+                    <div class="stat-card" id="expiryCard">
+                        <div class="stat-title">До истечения</div>
+                        <div class="stat-value" id="daysUntilExpiry">-</div>
+                        <div class="stat-subtitle">дней</div>
+                    </div>
+                </div>
+                
+                <div id="certificateInfo" style="margin-top: 40px;">
+                    <h2 style="color: var(--accent-color); margin-bottom: 20px;">📜 Информация о сертификате</h2>
+                    <div class="setting-item" id="certDetails">
+                        <div id="certContent"></div>
+                    </div>
+                </div>
+                
+                <div id="securityDetails" style="margin-top: 40px;">
+                    <h2 style="color: var(--accent-color); margin-bottom: 20px;">🛡️ Детали безопасности</h2>
+                    <div class="setting-item">
+                        <h3>Поддерживаемые протоколы</h3>
+                        <div id="supportedProtocols"></div>
+                    </div>
+                    <div class="setting-item">
+                        <h3>Используемый шифр</h3>
+                        <div id="cipherSuite"></div>
+                    </div>
+                    <div class="setting-item" id="vulnerabilitiesSection" style="display: none;">
+                        <h3>⚠️ Обнаруженные проблемы</h3>
+                        <div id="vulnerabilities"></div>
+                    </div>
+                </div>
+                
+                <div id="certificateChain" style="margin-top: 40px; display: none;">
+                    <h2 style="color: var(--accent-color); margin-bottom: 20px;">🔗 Цепочка сертификатов</h2>
+                    <div id="chainContent"></div>
+                </div>
             </div>
         </div>
 
@@ -1647,6 +1738,231 @@ const HTMLTemplate = `
             </div>
         </div>
 
+        <div class="main-card" id="sslcheck-instructionsPage" style="display: none;">
+            <h1>🔒 Инструкция по SSL/TLS анализу</h1>
+            
+            <div class="instructions-content">
+                <div class="intro-section">
+                    <h2>🎯 Что такое SSL/TLS анализ?</h2>
+                    <p>SSL/TLS анализ — это процесс проверки и оценки безопасности SSL/TLS сертификатов и соединений. Программа подключается к серверу, анализирует его сертификат, проверяет цепочку доверия, оценивает используемые протоколы и шифры, а также выявляет потенциальные уязвимости.</p>
+                    <p>Это критически важный инструмент для обеспечения безопасности веб-сайтов, API и других сетевых сервисов, использующих шифрование.</p>
+                </div>
+
+                <div class="settings-section">
+                    <h2>⚙️ Описание настроек</h2>
+                    
+                    <div class="setting-item">
+                        <h3>🌐 Домен или IP адрес</h3>
+                        <p><strong>Что это:</strong> Целевой сервер для анализа SSL/TLS сертификата</p>
+                        <p><strong>Примеры:</strong></p>
+                        <ul>
+                            <li><code>google.com</code> — доменное имя</li>
+                            <li><code>api.example.com</code> — поддомен</li>
+                            <li><code>192.168.1.100</code> — IP адрес в локальной сети</li>
+                            <li><code>8.8.8.8</code> — публичный IP адрес</li>
+                        </ul>
+                        <p><strong>Важно:</strong> Не указывайте протокол (https://), только доменное имя или IP</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>🔌 Порт</h3>
+                        <p><strong>Что это:</strong> Сетевой порт для подключения к SSL/TLS сервису</p>
+                        <p><strong>Популярные порты:</strong></p>
+                        <ul>
+                            <li><strong>443</strong> — HTTPS (веб-сайты) - по умолчанию</li>
+                            <li><strong>993</strong> — IMAPS (защищенная почта)</li>
+                            <li><strong>995</strong> — POP3S (защищенная почта)</li>
+                            <li><strong>465</strong> — SMTPS (отправка почты)</li>
+                            <li><strong>636</strong> — LDAPS (защищенный LDAP)</li>
+                            <li><strong>8443</strong> — альтернативный HTTPS</li>
+                        </ul>
+                        <div class="warning-small">
+                            💡 Для большинства веб-сайтов используйте порт 443
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <h3>⏱️ Таймаут</h3>
+                        <p><strong>Что это:</strong> Время ожидания установки SSL/TLS соединения</p>
+                        <p><strong>Рекомендации:</strong></p>
+                        <ul>
+                            <li><strong>5-10 сек:</strong> Для обычных веб-сайтов (рекомендуется)</li>
+                            <li><strong>15-30 сек:</strong> Для медленных или удаленных серверов</li>
+                            <li><strong>3-5 сек:</strong> Для быстрого тестирования локальных серверов</li>
+                        </ul>
+                        <div class="warning-small">
+                            ⚠️ Слишком маленький таймаут может привести к ложным ошибкам
+                        </div>
+                    </div>
+                </div>
+
+                <div class="network-section">
+                    <h2>🔐 Что анализирует программа</h2>
+                    
+                    <div class="network-table">
+                        <h3>Информация о сертификате:</h3>
+                        <ul>
+                            <li><strong>Домен и альтернативные имена</strong> — для каких доменов действует сертификат</li>
+                            <li><strong>Издатель (CA)</strong> — кто выдал сертификат</li>
+                            <li><strong>Срок действия</strong> — когда истекает сертификат</li>
+                            <li><strong>Размер ключа</strong> — длина криптографического ключа</li>
+                            <li><strong>Алгоритм подписи</strong> — метод подписи сертификата</li>
+                            <li><strong>Серийный номер</strong> — уникальный идентификатор</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="network-table">
+                        <h3>Параметры соединения:</h3>
+                        <ul>
+                            <li><strong>Версия TLS</strong> — используемый протокол (1.0, 1.1, 1.2, 1.3)</li>
+                            <li><strong>Набор шифров</strong> — алгоритмы шифрования</li>
+                            <li><strong>Поддерживаемые протоколы</strong> — все доступные версии TLS</li>
+                            <li><strong>Время подключения</strong> — скорость установки соединения</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="network-table">
+                        <h3>Оценка безопасности:</h3>
+                        <ul>
+                            <li><strong>A+/A</strong> — отличная безопасность</li>
+                            <li><strong>B</strong> — хорошая безопасность с незначительными проблемами</li>
+                            <li><strong>C</strong> — удовлетворительная безопасность</li>
+                            <li><strong>D</strong> — слабая безопасность</li>
+                            <li><strong>F</strong> — критические проблемы безопасности</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="examples-section">
+                    <h2>📋 Примеры использования</h2>
+                    
+                    <div class="config-example">
+                        <h3>🟢 Проверка веб-сайта</h3>
+                        <div class="config-box">
+                            <p><strong>Домен:</strong> google.com</p>
+                            <p><strong>Порт:</strong> 443</p>
+                            <p><strong>Таймаут:</strong> 10 сек</p>
+                        </div>
+                        <p><em>Стандартная проверка SSL сертификата веб-сайта</em></p>
+                    </div>
+
+                    <div class="config-example">
+                        <h3>🟡 Проверка почтового сервера</h3>
+                        <div class="config-box">
+                            <p><strong>Домен:</strong> mail.example.com</p>
+                            <p><strong>Порт:</strong> 993</p>
+                            <p><strong>Таймаут:</strong> 15 сек</p>
+                        </div>
+                        <p><em>Анализ SSL сертификата IMAP сервера</em></p>
+                    </div>
+
+                    <div class="config-example">
+                        <h3>🔴 Проверка локального сервера</h3>
+                        <div class="config-box">
+                            <p><strong>Домен:</strong> 192.168.1.100</p>
+                            <p><strong>Порт:</strong> 8443</p>
+                            <p><strong>Таймаут:</strong> 5 сек</p>
+                        </div>
+                        <p><em>Тестирование SSL на внутреннем сервере</em></p>
+                    </div>
+                </div>
+
+                <div class="results-section">
+                    <h2>📊 Интерпретация результатов</h2>
+                    
+                    <div class="result-item">
+                        <h3>🟢 Оценка безопасности</h3>
+                        <p><strong>A+/A:</strong> Сертификат и конфигурация соответствуют лучшим практикам</p>
+                        <p><strong>B:</strong> Хорошая безопасность, возможны незначительные улучшения</p>
+                        <p><strong>C/D:</strong> Есть проблемы, требующие внимания</p>
+                        <p><strong>F:</strong> Критические уязвимости, требуется немедленное исправление</p>
+                    </div>
+
+                    <div class="result-item">
+                        <h3>📅 Срок действия сертификата</h3>
+                        <p><strong>Зеленый:</strong> Сертификат действителен более 30 дней</p>
+                        <p><strong>Желтый:</strong> Сертификат истекает в течение 30 дней</p>
+                        <p><strong>Красный:</strong> Сертификат уже истек</p>
+                        <div class="warning-small">
+                            💡 Обновляйте сертификаты заранее, до истечения срока
+                        </div>
+                    </div>
+
+                    <div class="result-item">
+                        <h3>🔐 Версии TLS</h3>
+                        <p><strong>TLS 1.3:</strong> Самая современная и безопасная версия</p>
+                        <p><strong>TLS 1.2:</strong> Безопасная, широко поддерживаемая</p>
+                        <p><strong>TLS 1.1/1.0:</strong> Устаревшие, небезопасные версии</p>
+                        <div class="warning-small">
+                            ⚠️ Избегайте использования TLS 1.0 и 1.1
+                        </div>
+                    </div>
+
+                    <div class="result-item">
+                        <h3>🔑 Размер ключа</h3>
+                        <p><strong>4096+ бит:</strong> Очень высокая безопасность</p>
+                        <p><strong>2048 бит:</strong> Стандартная безопасность (минимум)</p>
+                        <p><strong>1024 бит:</strong> Слабая безопасность, не рекомендуется</p>
+                        <p><strong>< 1024 бит:</strong> Критически слабая безопасность</p>
+                    </div>
+                </div>
+
+                <div class="tips-section">
+                    <h2>💡 Советы и рекомендации</h2>
+                    
+                    <div class="tip-item">
+                        <h3>🎯 Регулярные проверки</h3>
+                        <ul>
+                            <li>Проверяйте сертификаты ежемесячно</li>
+                            <li>Настройте мониторинг срока действия</li>
+                            <li>Тестируйте после обновления сертификатов</li>
+                            <li>Проверяйте все поддомены и сервисы</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>⚡ Оптимизация безопасности</h3>
+                        <ul>
+                            <li>Используйте только TLS 1.2 и выше</li>
+                            <li>Отключите поддержку слабых шифров</li>
+                            <li>Используйте ключи размером минимум 2048 бит</li>
+                            <li>Регулярно обновляйте сертификаты</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>🛡️ Безопасность и соответствие</h3>
+                        <ul>
+                            <li>Анализируйте только свои серверы или с разрешения</li>
+                            <li>Документируйте результаты для аудита</li>
+                            <li>Следуйте стандартам PCI DSS для платежных систем</li>
+                            <li>Учитывайте требования GDPR для персональных данных</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>🔍 Устранение проблем</h3>
+                        <ul>
+                            <li><strong>Истекший сертификат:</strong> Обновите сертификат у CA</li>
+                            <li><strong>Неверное доменное имя:</strong> Проверьте SAN записи</li>
+                            <li><strong>Слабые шифры:</strong> Обновите конфигурацию сервера</li>
+                            <li><strong>Устаревший TLS:</strong> Отключите старые версии протокола</li>
+                        </ul>
+                    </div>
+
+                    <div class="tip-item">
+                        <h3>📈 Мониторинг и автоматизация</h3>
+                        <ul>
+                            <li>Настройте автоматическое обновление сертификатов</li>
+                            <li>Используйте Let's Encrypt для бесплатных сертификатов</li>
+                            <li>Мониторьте сертификаты через внешние сервисы</li>
+                            <li>Создайте процедуры экстренного обновления</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="main-card" id="agreementPage" style="display: none;">
             <h1>📋 Пользовательское соглашение</h1>
             
@@ -1817,8 +2133,10 @@ const HTMLTemplate = `
             // Скрываем все страницы
             document.getElementById('loadtestPage').style.display = 'none';
             document.getElementById('portscanPage').style.display = 'none';
+            document.getElementById('sslcheckPage').style.display = 'none';
             document.getElementById('loadtest-instructionsPage').style.display = 'none';
             document.getElementById('portscan-instructionsPage').style.display = 'none';
+            document.getElementById('sslcheck-instructionsPage').style.display = 'none';
             document.getElementById('agreementPage').style.display = 'none';
             
             // Показываем нужную страницу
@@ -1826,10 +2144,14 @@ const HTMLTemplate = `
                 document.getElementById('loadtestPage').style.display = 'block';
             } else if (pageId === 'portscan') {
                 document.getElementById('portscanPage').style.display = 'block';
+            } else if (pageId === 'sslcheck') {
+                document.getElementById('sslcheckPage').style.display = 'block';
             } else if (pageId === 'loadtest-instructions') {
                 document.getElementById('loadtest-instructionsPage').style.display = 'block';
             } else if (pageId === 'portscan-instructions') {
                 document.getElementById('portscan-instructionsPage').style.display = 'block';
+            } else if (pageId === 'sslcheck-instructions') {
+                document.getElementById('sslcheck-instructionsPage').style.display = 'block';
             } else if (pageId === 'agreement') {
                 document.getElementById('agreementPage').style.display = 'block';
             }
@@ -1841,18 +2163,24 @@ const HTMLTemplate = `
             
             const loadtestLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'loadtest\')"]');
             const portscanLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'portscan\')"]');
+            const sslcheckLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'sslcheck\')"]');
             const loadtestInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'loadtest-instructions\')"]');
             const portscanInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'portscan-instructions\')"]');
+            const sslcheckInstructionsLink = document.querySelector('.nav-dropdown-item[onclick="showPage(\'sslcheck-instructions\')"]');
             const agreementLink = document.querySelector('.nav-link[onclick="showPage(\'agreement\')"]');
             
             if (pageId === 'loadtest' && loadtestLink) {
                 loadtestLink.classList.add('active');
             } else if (pageId === 'portscan' && portscanLink) {
                 portscanLink.classList.add('active');
+            } else if (pageId === 'sslcheck' && sslcheckLink) {
+                sslcheckLink.classList.add('active');
             } else if (pageId === 'loadtest-instructions' && loadtestInstructionsLink) {
                 loadtestInstructionsLink.classList.add('active');
             } else if (pageId === 'portscan-instructions' && portscanInstructionsLink) {
                 portscanInstructionsLink.classList.add('active');
+            } else if (pageId === 'sslcheck-instructions' && sslcheckInstructionsLink) {
+                sslcheckInstructionsLink.classList.add('active');
             } else if (pageId === 'agreement' && agreementLink) {
                 agreementLink.classList.add('active');
             }
@@ -2121,6 +2449,193 @@ const HTMLTemplate = `
             });
             
             document.getElementById('portResults').style.display = 'block';
+        }
+
+        // Функции для SSL анализатора
+        let sslUpdateInterval;
+
+        function startSSLCheck() {
+            const form = document.getElementById('sslcheckForm');
+            const formData = new FormData(form);
+            const config = Object.fromEntries(formData);
+            
+            // Конвертируем числовые значения
+            config.port = parseInt(config.sslPort);
+            config.timeout = parseInt(config.sslTimeout);
+            
+            // Переименовываем поля для соответствия Go структуре
+            config.target = config.sslTarget;
+            
+            delete config.sslTarget;
+            delete config.sslPort;
+            delete config.sslTimeout;
+            
+            fetch('/sslcheck/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('startSSLBtn').disabled = true;
+                    document.getElementById('stopSSLBtn').disabled = false;
+                    document.getElementById('sslResults').style.display = 'none';
+                    sslUpdateInterval = setInterval(updateSSLStats, 1000);
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ошибка запроса: ' + error);
+            });
+        }
+
+        function stopSSLCheck() {
+            fetch('/sslcheck/stop', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('stopSSLBtn').disabled = true;
+            });
+        }
+
+        function updateSSLStats() {
+            fetch('/sslcheck/stats')
+            .then(response => response.json())
+            .then(data => {
+                const statusEl = document.getElementById('sslStatus');
+                
+                if (data.isAnalyzing) {
+                    statusEl.textContent = '🔍 Анализ SSL/TLS сертификата...';
+                    statusEl.className = 'status running';
+                } else {
+                    const results = data.results;
+                    
+                    if (results.error) {
+                        statusEl.textContent = '❌ Ошибка: ' + results.error;
+                        statusEl.className = 'status completed';
+                    } else if (results.isSecure) {
+                        const grade = results.securityGrade || 'N/A';
+                        statusEl.textContent = '✅ Анализ завершен! Оценка: ' + grade;
+                        statusEl.className = 'status completed';
+                        displaySSLResults(results);
+                    } else {
+                        statusEl.textContent = '❌ SSL/TLS недоступен';
+                        statusEl.className = 'status completed';
+                    }
+                    
+                    // Останавливаем обновления
+                    clearInterval(sslUpdateInterval);
+                    
+                    // Включаем кнопку "Начать анализ"
+                    document.getElementById('startSSLBtn').disabled = false;
+                    document.getElementById('stopSSLBtn').disabled = true;
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка получения статистики SSL:', error);
+            });
+        }
+
+        function displaySSLResults(results) {
+            if (!results || !results.isSecure) {
+                return;
+            }
+            
+            // Обновляем общую информацию
+            document.getElementById('securityGrade').textContent = results.securityGrade || 'N/A';
+            document.getElementById('tlsVersion').textContent = results.tlsVersion || 'N/A';
+            document.getElementById('responseTime').textContent = results.responseTime ? 
+                (results.responseTime / 1000000).toFixed(0) + ' мс' : 'N/A';
+            
+            // Обновляем информацию о сертификате
+            if (results.certificate) {
+                const cert = results.certificate;
+                document.getElementById('daysUntilExpiry').textContent = cert.daysUntilExpiry || 'N/A';
+                
+                // Цвет карточки в зависимости от срока действия
+                const expiryCard = document.getElementById('expiryCard');
+                if (cert.isExpired) {
+                    expiryCard.className = 'stat-card error';
+                } else if (cert.isExpiringSoon) {
+                    expiryCard.className = 'stat-card warning';
+                } else {
+                    expiryCard.className = 'stat-card success';
+                }
+                
+                // Цвет карточки оценки безопасности
+                const gradeCard = document.getElementById('securityGradeCard');
+                const grade = results.securityGrade;
+                if (grade === 'A+' || grade === 'A') {
+                    gradeCard.className = 'stat-card success';
+                } else if (grade === 'B' || grade === 'C') {
+                    gradeCard.className = 'stat-card warning';
+                } else {
+                    gradeCard.className = 'stat-card error';
+                }
+                
+                // Детали сертификата
+                const certContent = document.getElementById('certContent');
+                certContent.innerHTML = 
+                    '<h3>Основная информация</h3>' +
+                    '<p><strong>Домен:</strong> ' + (cert.commonName || 'N/A') + '</p>' +
+                    '<p><strong>Издатель:</strong> ' + (cert.issuer || 'N/A') + '</p>' +
+                    '<p><strong>Действителен с:</strong> ' + new Date(cert.notBefore).toLocaleDateString('ru-RU') + '</p>' +
+                    '<p><strong>Действителен до:</strong> ' + new Date(cert.notAfter).toLocaleDateString('ru-RU') + '</p>' +
+                    '<p><strong>Размер ключа:</strong> ' + (cert.keySize || 'N/A') + ' бит</p>' +
+                    '<p><strong>Алгоритм подписи:</strong> ' + (cert.signatureAlgorithm || 'N/A') + '</p>' +
+                    '<p><strong>Серийный номер:</strong> ' + (cert.serialNumber || 'N/A') + '</p>' +
+                    (cert.sans && cert.sans.length > 0 ? 
+                        '<p><strong>Альтернативные имена:</strong> ' + cert.sans.join(', ') + '</p>' : '');
+            }
+            
+            // Поддерживаемые протоколы
+            const protocolsEl = document.getElementById('supportedProtocols');
+            if (results.protocols && results.protocols.length > 0) {
+                protocolsEl.innerHTML = results.protocols.map(protocol => 
+                    '<span style="display: inline-block; background: var(--bg-card); padding: 4px 8px; margin: 2px; border-radius: 4px; border: 1px solid var(--border-color);">' + protocol + '</span>'
+                ).join('');
+            } else {
+                protocolsEl.textContent = 'Информация недоступна';
+            }
+            
+            // Используемый шифр
+            document.getElementById('cipherSuite').textContent = results.cipherSuite || 'N/A';
+            
+            // Уязвимости
+            const vulnerabilitiesSection = document.getElementById('vulnerabilitiesSection');
+            const vulnerabilitiesEl = document.getElementById('vulnerabilities');
+            
+            if (results.vulnerabilities && results.vulnerabilities.length > 0) {
+                vulnerabilitiesSection.style.display = 'block';
+                vulnerabilitiesEl.innerHTML = '<ul>' + 
+                    results.vulnerabilities.map(vuln => '<li style="color: var(--error-color); margin-bottom: 8px;">' + vuln + '</li>').join('') + 
+                    '</ul>';
+            } else {
+                vulnerabilitiesSection.style.display = 'none';
+            }
+            
+            // Цепочка сертификатов
+            const chainSection = document.getElementById('certificateChain');
+            const chainContent = document.getElementById('chainContent');
+            
+            if (results.chain && results.chain.length > 1) {
+                chainSection.style.display = 'block';
+                chainContent.innerHTML = results.chain.map((cert, index) => 
+                    '<div class="setting-item">' +
+                        '<h3>Сертификат ' + (index + 1) + ' ' + (index === 0 ? '(Основной)' : '(Промежуточный)') + '</h3>' +
+                        '<p><strong>Субъект:</strong> ' + (cert.commonName || 'N/A') + '</p>' +
+                        '<p><strong>Издатель:</strong> ' + (cert.issuer || 'N/A') + '</p>' +
+                        '<p><strong>Действителен до:</strong> ' + new Date(cert.notAfter).toLocaleDateString('ru-RU') + '</p>' +
+                    '</div>'
+                ).join('');
+            } else {
+                chainSection.style.display = 'none';
+            }
+            
+            document.getElementById('sslResults').style.display = 'block';
         }
     </script>
 </body>
